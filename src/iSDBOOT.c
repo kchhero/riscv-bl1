@@ -1195,9 +1195,10 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
 {
     int	result = 0;
     //    int ret = 0;
-    struct nx_bootmm *const pbm = (struct nx_bootmm * const)BASEADDR_OF_PBM;
+    struct nx_bootmm *const pbm = (struct nx_bootmm * const)BASEADDR_DRAM;
     NX_SDMMC_RegisterSet * const pSDXCReg = pgSDXCReg[pSDXCBootStatus->SDPort];
-    unsigned int BootSize = 0;
+    unsigned int bl1IMGSize = 0;
+    unsigned int bblIMGSize = 0;
 
 #ifdef DEBUG
     _dprintf("[BL1-DEBUG] SDMMCBOOT start\n");
@@ -1250,7 +1251,7 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
 #endif
     
     struct nx_bootinfo *pbi = &(pbm)->bi;
-    BootSize = pbi->LoadSize;
+    bl1IMGSize = pbi->LoadSize;
 
 #ifdef DEBUG
     _dprintf("[BL1-DEBUG] BL1 NSIH load addr = 0x%x\n",pbi->LoadAddr);
@@ -1268,10 +1269,10 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     }
 
     //sector seek, BL1 body size + 1
-    rsn += (((BootSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH) + 1);
+    rsn += (((bl1IMGSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH) + 1);
 
     //clear DRAM base
-    nx_memset(psector, 0x00, BLOCK_LENGTH + BootSize); //NSIH header 512byte + bl1 body size
+    nx_memset(psector, 0x00, BLOCK_LENGTH + bl1IMGSize); //NSIH header 512byte + bl1 body size
     
     //-------------------------------------------------------------------------------------------------------------
     //-------------------------------------------------------------------------------------------------------------
@@ -1302,11 +1303,10 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++++++\n");
     _dprintf("[BL1-DEBUG] BL1 BODY binary read to pData\n");
     _dprintf("[BL1-DEBUG]++++++++++++++++++++++++++++\n");
-    _dprintf("[BL1-DEBUG] pData addr = 0x%x\n",pData);
     _dprintf("[BL1-DEBUG] rsn = 0x%x\n",rsn);
 #endif
 
-    BootSize = pbi->LoadSize;
+    bblIMGSize = pbi->LoadSize;
     if (pbi->signature != HEADER_ID) {
 #ifdef DEBUG        
         _dprintf("[BL1-DEBUG] bbl pbi sifnature addr = %x\n", &(pbi->signature));
@@ -1315,18 +1315,23 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
         return 0;
     }
 
-#ifdef DEBUG
-    _dprintf("[BL1-DEBUG] BBL image sizer = 0x%x\n",BootSize);
-#endif
+    pData = (unsigned int*)(BASEADDR_DRAM + BLOCK_LENGTH);
+    unsigned int bblBodySectorsize = (bblIMGSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH;
 
-    pData = (unsigned int*)(BootSize+BASEADDR_OF_PBM);
-    unsigned int sectorsize = (BootSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH;
-    result = NX_SDMMC_ReadSectors(pSDXCBootStatus, rsn, sectorsize, pData);
+#ifdef DEBUG
+    _dprintf("[BL1-DEBUG] BBL image size = 0x%x\n",bblIMGSize);
+    _dprintf("[BL1-DEBUG] pData addr = 0x%x\n",pData);
+    _dprintf("[BL1-DEBUG] bblBodySectorsize = 0x%x\n",bblBodySectorsize);
+#endif
+    
+    //result = NX_SDMMC_ReadSectors(pSDXCBootStatus, rsn, bblBodySectorsize, pData);
+    result = NX_SDMMC_ReadSectors(pSDXCBootStatus, rsn, 2, pData); //test 1KB read and check
 
 #ifdef DEBUG
     {
         unsigned int* temp = (unsigned int*)(BASEADDR_DRAM + BLOCK_LENGTH);
         _dprintf("128 byte bbl BODY values are below ---\n");
+        _dprintf("temp addr = 0x%x\n",temp);
         for (unsigned int i = 0; i < 128; i++) {
             _dprintf("%x ",*(temp+i));
         }
