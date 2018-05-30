@@ -1319,6 +1319,7 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     //---------------------------------------------------------------------------
     //sector seek, BL1 body size + 1 + vector size + 1
     //---------------------------------------------------------------------------
+#ifndef VECTOR_TEST
     rsn += vectorBinSectorSize;
     
     //-------------------------------------------------------------------------------------------------------------
@@ -1348,16 +1349,16 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
 
 #ifdef DEBUG
     _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++++++\n");
-    _dprintf("[BL1-DEBUG] BL1 BODY binary read to pData\n");
+    _dprintf("[BL1-DEBUG] BBL BODY binary read to pData\n");
     _dprintf("[BL1-DEBUG]++++++++++++++++++++++++++++\n");
     _dprintf("[BL1-DEBUG] rsn = 0x%x\n",rsn);
 #endif
 
     bblIMGSize = pBBLBootInfo->LoadSize;
     if (pBBLBootInfo->signature != HEADER_ID) {
-#ifdef DEBUG        
+#ifdef DEBUG
         _dprintf("[BL1-DEBUG] bbl expected HEADER_ID = %x\n", HEADER_ID);
-#endif        
+#endif
         return 0;
     }
 
@@ -1379,7 +1380,6 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     // BBL Image Loaing to DRAM 0x80000000
     //---------------------------------------------------------------------------
     result = NX_SDMMC_ReadSectors(pSDXCBootStatus, rsn, bblBodySectorsize, pBBLSector);
-    //result = NX_SDMMC_ReadSectors(pSDXCBootStatus, rsn, 2, pData); //test 1KB read and check
 
 #ifdef DEBUG
     {
@@ -1391,7 +1391,7 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
         }
     }
 #endif
-
+#endif //VECTOR_TEST
     return result;
     
  error:

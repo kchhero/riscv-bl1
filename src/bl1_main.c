@@ -21,25 +21,19 @@
 #include <nx_qemu_sim_printf.h>
 #include <nx_cpuif_regmap.h>
 #include <nx_bootheader.h>
-//#ifdef MEMTEST
-//#include "./test/memtester.h"
+#ifdef MEMTEST
 #include <memtester.h>
-//#endif
-/* void __riscv_synch_thread(void) { */
-/*     __asm__ __volatile__ ("fence" : : : "memory"); */
-/* } */
+#endif
 
 unsigned int* bl1main()
 {
-    //    volatile unsigned int* pCLINT0Reg = (unsigned int*)(0x02000000);
     int result = 0;
-    //    volatile unsigned int* pCLINT1Reg = (unsigned int*)(0x02000004);
+
+#ifdef DEBUG
     _dprintf("bl1 enter---\n");
+#endif
 
-    /* _dprintf("CPU1 wake-up\n"); */
-    /* *pCLINT1Reg = 0x1; */
-
-
+    //todo
     //uart init
     //debug print
     
@@ -53,31 +47,32 @@ unsigned int* bl1main()
     while(0 == nx_cpuif_reg_read_one(DDRC_REG_0, 0) );
    _dprintf("DDR1 init done\n");
     
-    //Boot mode check and BBL+linux loading
-   /* simple_memtest(); */
-   /* while(1); */
-   /* return ;    */
-   result = iSDBOOT();
-/*       __riscv_synch_thread(); */
-    __asm__ __volatile__ ("fence.i" : : : "memory");
-   
-   /* volatile unsigned int* pCLINT1Reg = (unsigned int*)(0x02000004); */
-   /* _dprintf("CPU1 wake-up\n"); */
-   /* *pCLINT1Reg = 0x1; */
+#ifdef MEMTEST   
+   simple_memtest();
+#else
 
+   //Boot mode check and BBL+linux loading
+   result = iSDBOOT();
+
+   //reset vector test
+#ifdef VECTOR_TEST
+   volatile unsigned int* pCLINT1Reg = (unsigned int*)(0x02000004);
+   _dprintf("CPU1 wake-up\n");
+   *pCLINT1Reg = 0x1;
+   return ;
+#else
 #ifdef DEBUG
     _dprintf(">> bl1 boot result = 0x%x <<\n",result);
 #endif
     
     if (result) {
-        //        struct nx_bootinfo *pbi = (struct nx_bootinfo *)BASEADDR_DRAM;
 #ifdef DEBUG
-        _dprintf(">> Launch to 0x%x\n", BASEADDR_DRAM);//pbi->StartAddr);
+        _dprintf(">> Launch to 0x%x\n", BASEADDR_DRAM);
 #endif
-        //        __asm__ __volatile__ ("lifence" : : : "memory");
-        return (unsigned int*)(BASEADDR_DRAM);//pbi->StartAddr; //0x40000200 */
-        //        return 1;
+        return (unsigned int*)(BASEADDR_DRAM);
     }
+#endif //VECTOR_TEST
+#endif //MEMTEST
 
     while(1);
     return ;

@@ -16,7 +16,7 @@ VECTOR_BIN_FILE_NAME = "vector.bin"
 def nsihgen(txtFileName, binFileName):
     nsihFilePath = txtFileName
 
-    genFile = file(binFileName, 'wb')
+    genFile = open(binFileName, 'wb')
     temp = []
     with open(nsihFilePath, 'rt') as data:
         for line in data:
@@ -48,7 +48,7 @@ def nsihgen(txtFileName, binFileName):
 
 
 def sdboot_gpt_headercut():
-    genFile = file("sdboot.bin", 'wb')
+    genFile = open("sdboot.bin", 'wb')
     with open(ORG_GPT_FILE_NAME, 'rb') as data:
         genFile.write(data.read(0x43f))  # 1088)) #0~0x43f
 
@@ -61,14 +61,14 @@ def sdboot_gpt_headercut():
 
 
 def sdboot_dos_headercut():
-    genFile = file("sdboot.bin", 'wb')
+    genFile = open("sdboot.bin", 'wb')
     with open(ORG_DOS_FILE_NAME, 'rb') as data:
         genFile.write(data.read(512))  # 0~0x1ff
     genFile.close()
 
 
 def padAppend(padSize):
-    genFile = file("sdboot.bin", 'ab')
+    genFile = open("sdboot.bin", 'ab')
 
     with open(ZERO_PAD_FILE_NAME, 'rb') as data:
         genFile.write(data.read(padSize))  # 0~0x1f0 + 16byte
@@ -80,7 +80,7 @@ def vector_bin_size_fitting(filename):
     tempBinSize = os.stat(filename).st_size
     padSize = 1024*4 - tempBinSize
 
-    genFile = file(filename, 'ab')
+    genFile = open(filename, 'ab')
     print("vector bin padSize = %d" % padSize)
 
     with open(ZERO_PAD_FILE_NAME, 'rb') as data:
@@ -102,6 +102,7 @@ def main(binType):
     nsihgen(NSIH_BBL_TXT_FILE_NAME, NSIH_BBL_BIN_FILE_NAME)
 
     vector_bin_size_fitting(VECTOR_BIN_FILE_NAME)
+
 
 if __name__ == "__main__":
     try:

@@ -34,56 +34,19 @@ LDFLAGS	=	-static -nostdlib -L ./ -T$(LDS_NAME) \
 
 
 SYS_OBJS	=	head.o
-SYS_OBJS	+=	bl1_main.o \
-			iSDBOOT.o \
-			iSPIBOOT.o \
-			nx_gpt.o \
-			nx_lib.o \
-			nx_gpio.o \
-			nx_cpuif_regmap.o
-
-emul = no
-ifeq ($(QEMU), y)
-emul = yes
-endif
-ifeq ($(SIM), y)
-emul = yes
-CFLAGS			+=	-DSOC_SIM
-endif
-
-ifeq ($(emul), yes)
-	SYS_OBJS	+=	nx_qemu_sim_printf.o
-else
-	SYS_OBJS	+=	nx_swallow_printf.o nx_debug.o nx_lib.o
-endif
-
-ifeq ($(MEMTEST),y)
-CFLAGS			+=	-DMEMTEST -DSIMPLE_MEMTEST
-SYS_OBJS		+=	memtester.o
-endif
-
-ifeq ($(VECTOR_TEST),y)
-CFLAGS			+=	-DVECTOR_TEST
-endif
+SYS_OBJS	+=	main.o
+#SYS_OBJS	+=	nx_qemu_sim_printf.o
 
 SYS_OBJS_LIST	= 	$(addprefix $(DIR_OBJOUTPUT)/,$(SYS_OBJS))
 
-SYS_INCLUDES 	=	-I. \
-			-I ./src			\
-			-I ./src/test			\
-			-I ./include
-
+SYS_INCLUDES 	=	-I. 
 
 ################################################################################
-$(DIR_OBJOUTPUT)/%.o: src/%.c
+$(DIR_OBJOUTPUT)/%.o: %.c
 	$(Q)echo [compile....$<]
 	$(Q)$(CC) $< -c -o $@ $(CFLAGS) $(SYS_INCLUDES)
 ################################################################################
-$(DIR_OBJOUTPUT)/%.o: src/test/%.c
-	$(Q)echo [compile....$<]
-	$(Q)$(CC) $< -c -o $@ $(CFLAGS) $(SYS_INCLUDES)
-################################################################################
-$(DIR_OBJOUTPUT)/%.o: src/%.S
+$(DIR_OBJOUTPUT)/%.o: %.S
 	$(Q)echo [compile....$<]
 	$(Q)$(CC) $< -c -o $@ $(ASFLAG) $(CFLAGS) $(SYS_INCLUDES)
 ################################################################################

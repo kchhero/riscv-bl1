@@ -16,7 +16,7 @@ def binpadAppend(filename):
     temp = (tempBl1Size + 512 - 1)/512
     padSize = (temp * 512) - tempBl1Size
 
-    genFile = file(filename, 'ab')
+    genFile = open(filename, 'ab')
     # print(filename + " padSize = %d"%padSize)
 
     with open(ZERO_PAD_FILE_NAME, 'rb') as data:
@@ -29,7 +29,7 @@ def getNSIHSize(binFileName):
     temp = os.stat(binFileName).st_size
     # tempInt = int(temp)
     # tempAlign = 512*int((tempInt + 512 -1)/512)
-    temp = "%08x"%temp
+    temp = "%08x" % temp
     return temp
 
 
@@ -38,8 +38,9 @@ def modNSIHTXT(txtFileName, binFileName):
     with fdopen(tempFile1, 'wt') as new_file:
         with open(txtFileName) as org_file:
             for line in org_file:
-                if "0x040" in  line and "Load Size" in line:
-                    new_file.write(str(getNSIHSize(binFileName)) + "   " + "".join(line.split('   ')[1:]))
+                if "0x040" in line and "Load Size" in line:
+                    new_file.write(str(getNSIHSize(binFileName)) + "   " +
+                                   "".join(line.split('   ')[1:]))
                 else:
                     new_file.write(line)
 
