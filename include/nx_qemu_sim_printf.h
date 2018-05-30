@@ -11,8 +11,6 @@ extern void kputc(char c);
 #include "nx_uart.h"
 #include <stdint.h>
 
-#define REG32(p, i)	((p)[(i) >> 2])
-
 #define _CONCAT3(A, B, C) A ## B ## C
 
 extern void kputs(const char *);

@@ -24,7 +24,7 @@ CFLAGS		+= \
 		-Wall -nostartfiles \
 		-fno-common -DENTROPY=0 \
 		-DNONSMP_HART=0 \
-		-I ./src -I ./src/test -I . -I ./include -I ./include/debug
+		-I ./src -I . -I ./include
 
 LDFLAGS	=	-static -nostdlib -L ./ -T$(LDS_NAME) \
 		-Wl,-Map=$(DIR_TARGETOUTPUT)/$(PROJECT_NAME).map,--cref	\
@@ -33,14 +33,14 @@ LDFLAGS	=	-static -nostdlib -L ./ -T$(LDS_NAME) \
                 -mabi=$(ABI)
 
 
-SYS_OBJS	=	head.o vector.o
+SYS_OBJS	=	head.o
 SYS_OBJS	+=	bl1_main.o \
-			nx_cpuif_regmap.o \
+			iSDBOOT.o \
+			iSPIBOOT.o \
 			nx_gpt.o \
 			nx_lib.o \
 			nx_gpio.o \
-			iSDBOOT.o \
-			iSPIBOOT.o
+			nx_cpuif_regmap.o
 
 emul = no
 ifeq ($(QEMU), y)
@@ -48,6 +48,7 @@ emul = yes
 endif
 ifeq ($(SIM), y)
 emul = yes
+CFLAGS			+=	-DSOC_SIM
 endif
 
 ifeq ($(emul), yes)
@@ -57,6 +58,7 @@ else
 endif
 
 ifeq ($(MEMTEST),y)
+CFLAGS			+=	-DMEMTEST -DSIMPLE_MEMTEST
 SYS_OBJS		+=	memtester.o
 endif
 

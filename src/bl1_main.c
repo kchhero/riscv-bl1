@@ -20,15 +20,24 @@
 #include <nx_swallow.h>
 #include <nx_qemu_sim_printf.h>
 #include <nx_cpuif_regmap.h>
+#include <nx_bootheader.h>
+//#ifdef MEMTEST
+//#include "./test/memtester.h"
+#include <memtester.h>
+//#endif
+/* void __riscv_synch_thread(void) { */
+/*     __asm__ __volatile__ ("fence" : : : "memory"); */
+/* } */
 
-int bl1main()
+unsigned int* bl1main()
 {
     //    volatile unsigned int* pCLINT0Reg = (unsigned int*)(0x02000000);
-    volatile unsigned int* pCLINT1Reg = (unsigned int*)(0x02000004);
-    _dprintf("BL1-TEST Good2\n");
+    int result = 0;
+    //    volatile unsigned int* pCLINT1Reg = (unsigned int*)(0x02000004);
+    _dprintf("bl1 enter---\n");
 
-    _dprintf("CPU1 wake-up\n");
-    *pCLINT1Reg = 0x1;
+    /* _dprintf("CPU1 wake-up\n"); */
+    /* *pCLINT1Reg = 0x1; */
 
 
     //uart init
@@ -45,9 +54,31 @@ int bl1main()
    _dprintf("DDR1 init done\n");
     
     //Boot mode check and BBL+linux loading
-
-   iSDBOOT();
+   /* simple_memtest(); */
+   /* while(1); */
+   /* return ;    */
+   result = iSDBOOT();
+/*       __riscv_synch_thread(); */
+    __asm__ __volatile__ ("fence.i" : : : "memory");
    
+   /* volatile unsigned int* pCLINT1Reg = (unsigned int*)(0x02000004); */
+   /* _dprintf("CPU1 wake-up\n"); */
+   /* *pCLINT1Reg = 0x1; */
+
+#ifdef DEBUG
+    _dprintf(">> bl1 boot result = 0x%x <<\n",result);
+#endif
+    
+    if (result) {
+        //        struct nx_bootinfo *pbi = (struct nx_bootinfo *)BASEADDR_DRAM;
+#ifdef DEBUG
+        _dprintf(">> Launch to 0x%x\n", BASEADDR_DRAM);//pbi->StartAddr);
+#endif
+        //        __asm__ __volatile__ ("lifence" : : : "memory");
+        return (unsigned int*)(BASEADDR_DRAM);//pbi->StartAddr; //0x40000200 */
+        //        return 1;
+    }
+
     while(1);
     return ;
 }

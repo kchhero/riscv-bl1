@@ -41,10 +41,10 @@ f1402573    // 0x008     csrr   a0, mhartid
 //------------------------------------------------------------------------------
 // Main Bootloader Load Info
 //------------------------------------------------------------------------------
-00489000    // 0x040 : Load Size for 2ndboot.
+00000200    // 0x040 : Load Size for 2ndboot.
 00008000    // 0x044 : CRC32 //X:Device Read Address from 2ndboot Device.
-80000200    // 0x048 : Load Address for 2ndboot.
-80000200    // 0x04C : Launch Address for 2ndboot.
+80000000    // 0x048 : Load Address for 2ndboot.
+80000000    // 0x04C : Launch Address for 2ndboot.
 
 00000002    // 0x050    [7:0] - Channel number
 03000000    // 0x054    Boot From SDMMC    [31:24] - 0: USB, 1: SPI, 2: NAND, 3:SDMMC, 4: SDFS

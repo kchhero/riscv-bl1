@@ -24,11 +24,14 @@ dd if=nsih-bl1.bin bs=512 >> sdboot.bin
 #Add bl1.bin to sdboot.bin
 dd if=bl1.bin >> sdboot.bin
 
+#Add vector.bin to sdboot.bin
+dd if=vector.bin bs=4K >> sdboot.bin
+
 #Add nsih-bbl.bin to sdboot.bin
 dd if=nsih-bbl.bin bs=512 >> sdboot.bin
 
 #Add bbl binary to sdboot.bin
-dd if=bbl >> sdboot.bin
+dd if=bbl.bin >> sdboot.bin
 
 #Convert from ascii to hex
 python2.7 converthex.py
