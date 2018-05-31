@@ -18,15 +18,20 @@
 #define __NX_BOOTHEADER_H__
 
 struct nx_bootinfo {
-    unsigned int vector[8];				/* 0x000 ~ 0x01f */
-    unsigned int vector_rel[8];			/* 0x020 ~ 0x03f */
+    unsigned int vector[8];				/* 0x000 ~ 0x01F */
+    unsigned int vector_rel[8];		        	/* 0x020 ~ 0x03F */
 
     unsigned int LoadSize;				/* 0x040 */
-    unsigned int CRC32;				/* 0x044 */
+    unsigned int CRC32;		         		/* 0x044 */
     unsigned int LoadAddr;				/* 0x048 */
     unsigned int StartAddr;				/* 0x04C */
 
-    unsigned char _reserved3[512 - 4 * 22];		/* 0x050 ~ 0x1f7 */
+    unsigned char _reserved3[176];		        /* 0x050 ~ 0x0FF */
+    
+    unsigned int dtbSize;                               /* 0x100 */
+    unsigned int *dtbLoadAddr;                          /* 0x104 */
+    
+    unsigned char _reserved4[236];      		/* 0x108 ~ 0x1f7 */
 
     /* version */
     unsigned int buildinfo;				/* 0x1f8 */
@@ -34,11 +39,6 @@ struct nx_bootinfo {
     /* "NSIH": nexell system infomation header */
     unsigned int signature;				/* 0x1fc */
 } __attribute__ ((packed, aligned(16)));
-
-/* struct nx_bootheader { */
-/* 	struct nx_bootinfo bi; */
-/* 	unsigned int image[1]; */
-/* }; */
 
 struct nx_bootmm {
     struct nx_bootinfo bi;

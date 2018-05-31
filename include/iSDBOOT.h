@@ -43,12 +43,6 @@
                  (((unsigned int)'I')<<16) |    \
                  (((unsigned int)'H')<<24))
 
-/* #define HEADER_ID                               \ */
-/*                 ((((unsigned int)'H')<< 0) |    \ */
-/*                  (((unsigned int)'I')<< 8) |    \ */
-/*                  (((unsigned int)'S')<<16) |    \ */
-/*                  (((unsigned int)'N')<<24)) */
-
 /*----------------------------------------------------------------------------*/
 #define	NX_SDMMC_STATUS_NOERROR		0
 #define	NX_SDMMC_STATUS_ERROR		(1U << 31)

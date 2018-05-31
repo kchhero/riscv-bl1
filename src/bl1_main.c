@@ -21,6 +21,7 @@
 #include <nx_qemu_sim_printf.h>
 #include <nx_cpuif_regmap.h>
 #include <nx_bootheader.h>
+#include <iSDBOOT.h>
 #ifdef MEMTEST
 #include <memtester.h>
 #endif
@@ -59,7 +60,7 @@ unsigned int* bl1main()
    volatile unsigned int* pCLINT1Reg = (unsigned int*)(0x02000004);
    _dprintf("CPU1 wake-up\n");
    *pCLINT1Reg = 0x1;
-   return ;
+   return 0;
 #else
 #ifdef DEBUG
     _dprintf(">> bl1 boot result = 0x%x <<\n",result);
@@ -75,5 +76,5 @@ unsigned int* bl1main()
 #endif //MEMTEST
 
     while(1);
-    return ;
+    return 0;
 }

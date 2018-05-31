@@ -1,5 +1,19 @@
 #!/bin/bash
 
+#-----------------------------
+#   vmlinux + BBL
+#-----------------------------
+#   NSIH of BBL   -  512Byte
+#-----------------------------
+#   DTB Binary
+#-----------------------------
+#   Vector Binary -  4KB
+#-----------------------------
+#   BL1 Binary
+#-----------------------------
+#   NSIH of BL1   -  512Byte
+#-----------------------------
+
 argc=$#
 BINTYPE=$1
 
@@ -26,6 +40,9 @@ dd if=bl1.bin >> sdboot.bin
 
 #Add vector.bin to sdboot.bin
 dd if=vector.bin bs=4K >> sdboot.bin
+
+#Add DTB binary(swallow.dtb) to sdboot.bin
+dd if=swallow.dtb >> sdboot.bin
 
 #Add nsih-bbl.bin to sdboot.bin
 dd if=nsih-bbl.bin bs=512 >> sdboot.bin

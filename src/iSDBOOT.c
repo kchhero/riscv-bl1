@@ -1197,18 +1197,20 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     //    int ret = 0;
     struct nx_bootmm *bl1BootMem = (struct nx_bootmm *)BASEADDR_DRAM;
     struct nx_bootmm *bblBootMem = (struct nx_bootmm *)BASEADDR_DRAM;
-    unsigned int bl1IMGSize = 0;
-    unsigned int bblIMGSize = 0;
+    unsigned int bl1BinSize = 0;
+    unsigned int bblBinSize = 0;
+    unsigned int dtbBinSize = 0;
     NX_SDMMC_RegisterSet * const pSDXCReg = pgSDXCReg[pSDXCBootStatus->SDPort];
 
-    unsigned int *pVectorTableSector = (unsigned int *)(VECTOR_ADDR);
+    unsigned int *pVectorTableSector = (unsigned int *)(VECTOR_ADDR);    
     unsigned int *pBL1Sector = (unsigned int *)&(bl1BootMem)->bi;
     unsigned int *pBBLSector = (unsigned int *)&(bblBootMem)->bi;
+    unsigned int *pDTBSector = (unsigned int *)&(bblBootMem)->bi;
     unsigned int rsn = 1;
 
     struct nx_bootinfo *pBL1BootInfo = &(bl1BootMem)->bi;
     struct nx_bootinfo *pBBLBootInfo = &(bblBootMem)->bi;
- 
+
 #ifdef DEBUG
     _dprintf("[BL1-DEBUG] SDMMCBOOT start\n");
 #endif
@@ -1231,9 +1233,11 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
 #endif
     }
 
+    //=============================================================================================================
+    // BL1
     //---------------------------------------------------------------------------
-    //MBR sector 0
-    //NSIH sector 1 of BL1
+    //MBR sector 0 skipped
+    // BL1 NSIH sector 1 of BL1
     //---------------------------------------------------------------------------
 #ifdef DEBUG
     _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++++++\n");
@@ -1247,30 +1251,34 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
 #endif
     }
 
-#ifdef DEBUG //BL1 NSIH check
-    {
-        unsigned int* temp = (unsigned int*)(BASEADDR_DRAM);
-        _dprintf("128 byte bl1 NSIH values are below ---\n");
-        for (unsigned int i = 0; i < 128; i++) {
-            _dprintf("%x ",*(temp+i));
-        }
-    }
-#endif
+/* #ifdef DEBUG //BL1 NSIH check */
+/*     { */
+/*         unsigned int* temp = (unsigned int*)(BASEADDR_DRAM); */
+/*         _dprintf("128 byte bl1 NSIH values are below ---\n"); */
+/*         for (unsigned int i = 0; i < 128; i++) { */
+/*             _dprintf("%x ",*(temp+i)); */
+/*         } */
+/*     } */
+/* #endif */
 
     //---------------------------------------------------------------------------
-    // get BL1 Image Size
+    // get BL1 Image Size for seek disk
     //---------------------------------------------------------------------------
-    bl1IMGSize = pBL1BootInfo->LoadSize;
+    bl1BinSize = pBL1BootInfo->LoadSize;
+    dtbBinSize = pBL1BootInfo->dtbSize;
+    pDTBSector = pBL1BootInfo->dtbLoadAddr;
 
 #ifdef DEBUG
     _dprintf("[BL1-DEBUG] BL1 NSIH load addr = 0x%x\n",pBL1BootInfo->LoadAddr);
-    _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++++++\n");
-    _dprintf("[BL1-DEBUG] BL1 NSIH header check\n");
-    _dprintf("[BL1-DEBUG]++++++++++++++++++++++++++++\n");
+    _dprintf("[BL1-DEBUG] DTB BIN size = 0x%x\n",dtbBinSize);
+    _dprintf("[BL1-DEBUG] DTB BIN load addr = 0x%x\n",pDTBSector);
 #endif
 
     if (pBL1BootInfo->signature != HEADER_ID) {
-#ifdef DEBUG        
+#ifdef DEBUG
+        _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++++++\n");
+        _dprintf("[BL1-DEBUG] BL1 NSIH header check\n");
+        _dprintf("[BL1-DEBUG]++++++++++++++++++++++++++++\n");
         _dprintf("[BL1-DEBUG] bl1 pbi sifnature addr = %x\n", &(pBL1BootInfo->signature));
         _dprintf("[BL1-DEBUG] bl1 expected HEADER_ID = %x\n", HEADER_ID);
 #endif        
@@ -1282,18 +1290,16 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     //---------------------------------------------------------------------------
     //sector seek, BL1 body size + 1
     //---------------------------------------------------------------------------
-    rsn += ((bl1IMGSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH);
-#ifdef DEBUG
-    _dprintf("[BL1-DEBUG] seek BL1 Body, rsn = 0x%x\n",rsn);
-#endif
+    rsn += ((bl1BinSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH);
 
-    //clear DRAM base
-    nx_memset(pBL1Sector, 0x00, BLOCK_LENGTH + bl1IMGSize); //NSIH header 512byte + bl1 body size
-    
+    //clear DRAM base 0x80000000
+    nx_memset(pBL1Sector, 0x00, BLOCK_LENGTH + bl1BinSize); //NSIH header 512byte + bl1 body size
+
+    //=============================================================================================================
+    // Vector Table
     //-------------------------------------------------------------------------------------------------------------
-    //---------------------------------------------------------------------------
     // Vector Binary Loading to SRAM offset 0x7000 (4KB region) = BLOCK_LENGTH*8 = 512 * 8
-    //---------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------------------
 #ifdef DEBUG
     _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++++++\n");
     _dprintf("[BL1-DEBUG] VECTOR loading in addr = 0x%x\n",pVectorTableSector);
@@ -1307,7 +1313,7 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
         _dprintf("Vector Table read fail.\n");
 #endif
     }
-#ifdef DEBUG //BL1 NSIH check
+#ifdef DEBUG
     {
         unsigned int* temp = (unsigned int*)(0x40007000);
         _dprintf("128 byte vector table region values are below ---\n");
@@ -1316,15 +1322,39 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
         }
     }
 #endif
+    //=============================================================================================================
+
     //---------------------------------------------------------------------------
     //sector seek, BL1 body size + 1 + vector size + 1
     //---------------------------------------------------------------------------
 #ifndef VECTOR_TEST
     rsn += vectorBinSectorSize;
     
+    //=============================================================================================================
+    // DTB
+    //=============================================================================================================
+    //---------------------------------------------------------------------------
+    // DTB binary read
+    //---------------------------------------------------------------------------
+    unsigned int dtbBinSectorSize = (dtbBinSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH;
+    result = NX_SDMMC_ReadSectors(pSDXCBootStatus, rsn, dtbBinSectorSize, pDTBSector);
+    rsn += dtbBinSectorSize;
+#ifdef DEBUG
+    {
+        unsigned int* temp = (unsigned int*)pDTBSector;
+        _dprintf("128 byte DTB values are below ---\n");
+        for (unsigned int i = 0; i < 128; i++) {
+            _dprintf("%x ",*(temp+i));
+        }
+    }
+#endif
+    //=============================================================================================================
+        
+
+    //=============================================================================================================
+    // BBL
     //-------------------------------------------------------------------------------------------------------------
-    //-------------------------------------------------------------------------------------------------------------
-    
+    // BBL NSIH 512byte read
 #ifdef DEBUG
     _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++\n");
     _dprintf("[BL1-DEBUG] BBL NSIH header read\n");
@@ -1332,9 +1362,6 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     _dprintf("[BL1-DEBUG] seek vector table, rsn = 0x%x\n",rsn);
 #endif
 
-    //---------------------------------------------------------------------------
-    // BBL NSIH 512byte read
-    //---------------------------------------------------------------------------
     result = NX_SDMMC_ReadSectors(pSDXCBootStatus, rsn++, 1, pBBLSector);
 
 #ifdef DEBUG
@@ -1346,7 +1373,8 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
         }
     }
 #endif
-
+    //-------------------------------------------------------------------------------------------------------------
+    
 #ifdef DEBUG
     _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++++++\n");
     _dprintf("[BL1-DEBUG] BBL BODY binary read to pData\n");
@@ -1354,7 +1382,7 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     _dprintf("[BL1-DEBUG] rsn = 0x%x\n",rsn);
 #endif
 
-    bblIMGSize = pBBLBootInfo->LoadSize;
+    bblBinSize = pBBLBootInfo->LoadSize;
     if (pBBLBootInfo->signature != HEADER_ID) {
 #ifdef DEBUG
         _dprintf("[BL1-DEBUG] bbl expected HEADER_ID = %x\n", HEADER_ID);
@@ -1362,16 +1390,18 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
         return 0;
     }
 
+    //-------------------------------------------------------------------------------------------------------------
+    // BBL Binary
     //---------------------------------------------------------------------------
     // pBBLSector = (unsigned int*)(BASEADDR_DRAM);
     // clear DRAM BBL NSIH header, not neccesary anymore
     //---------------------------------------------------------------------------
     nx_memset(pBBLSector, 0x00, BLOCK_LENGTH); //NSIH header 512byte
     
-    unsigned int bblBodySectorsize = (bblIMGSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH;
+    unsigned int bblBodySectorsize = (bblBinSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH;
 
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] BBL image size = 0x%x\n",bblIMGSize);
+    _dprintf("[BL1-DEBUG] BBL image size = 0x%x\n",bblBinSize);
     _dprintf("[BL1-DEBUG] pData addr = 0x%x\n",pBBLSector);
     _dprintf("[BL1-DEBUG] bblBodySectorsize = 0x%x\n",bblBodySectorsize);
 #endif
@@ -1391,6 +1421,8 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
         }
     }
 #endif
+    //=============================================================================================================
+    
 #endif //VECTOR_TEST
     return result;
     

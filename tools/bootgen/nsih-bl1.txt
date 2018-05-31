@@ -41,7 +41,7 @@
 //------------------------------------------------------------------------------
 // Main Bootloader Load Info
 //------------------------------------------------------------------------------
-00003600    // 0x040 : Load Size for 2ndboot.
+00003a00    // 0x040 : Load Size for 2ndboot.
 00008000    // 0x044 : CRC32 //X:Device Read Address from 2ndboot Device.
 40000200    // 0x048 : Load Address for 2ndboot.
 40000200    // 0x04C : Launch Address for 2ndboot.
@@ -109,9 +109,9 @@
 00000000    // 0x0F4
 00000000    // 0x0F8
 00000000    // 0x0FC
-00000000    // 0x100
-00000000    // 0x104
-00000000    // 0x108
+00000e00    // 0x100 /DTB Binary Size /need calculate /Do not change this line!!
+40006000    // 0x104 /DTB load address
+00000000    // 0x108 
 00000000    // 0x10C
 00000000    // 0x110
 00000000    // 0x114

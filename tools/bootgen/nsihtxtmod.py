@@ -5,6 +5,7 @@ from os import fdopen, remove
 
 BL1_FILE_NAME = "bl1.bin"
 BBL_FILE_NAME = "bbl.bin"
+DTB_FILE_NAME = "swallow.dtb"
 NSIH_BL1_TXT_FILE_NAME = "nsih-bl1.txt"
 NSIH_BBL_TXT_FILE_NAME = "nsih-bbl.txt"
 
@@ -33,12 +34,12 @@ def getNSIHSize(binFileName):
     return temp
 
 
-def modNSIHTXT(txtFileName, binFileName):
+def modNSIHTXT(txtFileName, binFileName, key1, key2):
     tempFile1, tempFile2 = mkstemp()
     with fdopen(tempFile1, 'wt') as new_file:
         with open(txtFileName) as org_file:
             for line in org_file:
-                if "0x040" in line and "Load Size" in line:
+                if key1 in line and key2 in line:
                     new_file.write(str(getNSIHSize(binFileName)) + "   " +
                                    "".join(line.split('   ')[1:]))
                 else:
@@ -51,8 +52,11 @@ def modNSIHTXT(txtFileName, binFileName):
 def main():
     binpadAppend(BL1_FILE_NAME)
     binpadAppend(BBL_FILE_NAME)
-    modNSIHTXT(NSIH_BL1_TXT_FILE_NAME, BL1_FILE_NAME)
-    modNSIHTXT(NSIH_BBL_TXT_FILE_NAME, BBL_FILE_NAME)
+    binpadAppend(DTB_FILE_NAME)
+    modNSIHTXT(NSIH_BL1_TXT_FILE_NAME, BL1_FILE_NAME, "0x040", "Load Size")
+    modNSIHTXT(NSIH_BBL_TXT_FILE_NAME, BBL_FILE_NAME, "0x040", "Load Size")
+    modNSIHTXT(NSIH_BL1_TXT_FILE_NAME, DTB_FILE_NAME,
+               "0x100", "DTB Binary Size")
 
 
 if __name__ == "__main__":
