@@ -23,8 +23,8 @@ CFLAGS		+= \
 		-O2 -std=gnu11 \
 		-Wall -nostartfiles \
 		-fno-common -DENTROPY=0 \
-		-DNONSMP_HART=0 \
-		-I ./src -I . -I ./include
+		-DNONSMP_HART=0
+
 
 LDFLAGS	=	-static -nostdlib -L ./ -T$(LDS_NAME) \
 		-Wl,-Map=$(DIR_TARGETOUTPUT)/$(PROJECT_NAME).map,--cref	\
@@ -36,11 +36,11 @@ LDFLAGS	=	-static -nostdlib -L ./ -T$(LDS_NAME) \
 SYS_OBJS	=	head.o
 SYS_OBJS	+=	bl1_main.o \
 			iSDBOOT.o \
-			iSPIBOOT.o \
 			nx_gpt.o \
 			nx_lib.o \
 			nx_gpio.o \
 			nx_cpuif_regmap.o
+			#iSPIBOOT.o \
 
 emul = no
 ifeq ($(QEMU), y)
@@ -54,7 +54,7 @@ endif
 ifeq ($(emul), yes)
 	SYS_OBJS	+=	nx_qemu_sim_printf.o
 else
-	SYS_OBJS	+=	nx_swallow_printf.o nx_debug.o nx_lib.o
+	SYS_OBJS	+=	nx_swallow_printf.o serial.o
 endif
 
 ifeq ($(MEMTEST),y)

@@ -30,3 +30,12 @@ int nx_memcmp(const void* s1, const void* s2, int n)
 	}
 	return 0;
 }
+
+//1cycle = 5ns
+void udelay(volatile unsigned int delay)
+{
+    volatile unsigned int i, temp;
+    for (i = 0; i < 200*delay; i++) {
+        temp ^= i;
+    }
+}

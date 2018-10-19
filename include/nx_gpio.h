@@ -129,8 +129,6 @@ typedef enum
 	NX_GPIO_PULL_OFF	= 2UL
 } NX_GPIO_PULL;
 
-void udelay(unsigned int utime);
-
 struct nxpadi {
 	unsigned int alt: 3;    /* alt function */
 	unsigned int pin: 5;    /* pin number of group */
@@ -143,12 +141,19 @@ union nxpad {
 	struct nxpadi padi;
 };
 
-void GPIOSetAltFunction(const struct nxpadi *pad, int setalt);
-void GPIOSetDrvSt(const struct nxpadi *pad, NX_GPIO_DRVSTRENGTH str);
-void GPIOSetPullup(const struct nxpadi *pad, NX_GPIO_PULL pull);
+void GPIOSetAltFunction(const struct nxpadi pad, int setalt);
+void GPIOSetDrvSt(const struct nxpadi pad, NX_GPIO_DRVSTRENGTH str);
+void GPIOSetPullup(const struct nxpadi pad, NX_GPIO_PULL pull);
 void GPIOReleasePAD(const struct nxpadi *pad);
-void GPIOSetIO(const struct nxpadi *pad, int inout);
-void GPIOSetOutput(const struct nxpadi *pad, int outvalue);
-void setpad(const union nxpad *const ppad, int num, int enable);
+void GPIOSetIO(const struct nxpadi pad, int inout);
+void GPIOSetOutput(const struct nxpadi pad, int outvalue);
+void setpad(const struct nxpadi pad, int enable);
 
+void GPIOSetAltFunctionEx(const struct nxpadi pad, int setalt);
+void GPIOSetDrvStEx(const struct nxpadi pad, NX_GPIO_DRVSTRENGTH str);
+void GPIOSetPullupEx(const struct nxpadi pad, NX_GPIO_PULL pull);
+void GPIOReleasePADEx(const struct nxpadi *pad);
+void GPIOSetIOEx(const struct nxpadi pad, int inout);
+void GPIOSetOutputEx(const struct nxpadi pad, int outvalue);
+void setpadEx(const struct nxpadi pad, int enable);
 #endif //__NX_GPIO_H__

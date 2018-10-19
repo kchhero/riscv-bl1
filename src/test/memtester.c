@@ -25,9 +25,10 @@ void simple_memtest(void)
 {
 	unsigned int* start, *end, *ptr;
 	unsigned int  size;
-
-	start = ((unsigned int *)0x80200000);
-        end   = ((unsigned int *)0x80202000);
+        unsigned int  count=0;
+        
+	start = ((unsigned int *)0x80000000);
+        end   = ((unsigned int *)0x80000008);
 	/* end   = ((unsigned int *)(0x80000000 */
         /*                           + (g_ddr3_info.sdram_size * 1024 * 1024 - 1)));	//MB -> Byte */
 	ptr = start;
@@ -38,10 +39,11 @@ void simple_memtest(void)
 		start, end, size);
 
 	/* step xx. data write */
-	_dprintf("Read/Write : \n");
-	_dprintf("Write  \n");
+	_dprintf("Read/Write : \r\n");
+	_dprintf("Write  \r\n");
 	while (ptr < end) {
-		*ptr = (unsigned int)((MPTRS)ptr);
+        //		*ptr = (unsigned int)((MPTRS)ptr);
+                *ptr = count++;
 #if 0
 		if (((unsigned int)((MPTRS)ptr) & 0x3FFFFFL) == 0)
 			_dprintf("0x%x:\r\n", ptr);
@@ -52,11 +54,12 @@ void simple_memtest(void)
 			_dprintf("%c", progress[++j%  PROGRESSLEN]);
 		}
 #endif
+                _dprintf(".");
 		ptr++;
 	}
-	_dprintf("\b\b\b\b\b\b\b\n");
+	_dprintf("\b\b\b\b\b\b\b\r\n");
 
-	_dprintf("Compare  \n");
+	_dprintf("Compare  \r\n");
 	ptr = start;
 	while (ptr < end) {
 #if 0
@@ -66,6 +69,7 @@ void simple_memtest(void)
 		unsigned int data0 = *ptr, data1 = (unsigned int)((MPTRS)ptr);
 		unsigned int i = 0;
 
+                _dprintf(".");
 		for (i = 0; i < 32; i++) {
 			data0 &= 1UL << i;
 			data1 &= 1UL << i;
@@ -73,13 +77,11 @@ void simple_memtest(void)
 			if (data0 != data1) {
 //				_dprintf("[%dbit] 0x%x: %x\r\n", i,
 //				(unsigned int)((MPTRS)ptr), *ptr);
-				_dprintf("--------------------------------------"
-						"\r\n");
+				_dprintf("-------------------------------------\r\n");
 				_dprintf("[%dbit] 0x%x: %x(0x%x: %x)\r\n",
 						i, data1, data0, (unsigned int)((MPTRS)ptr),
 						*ptr);
-				_dprintf("--------------------------------------"
-						"\r\n");
+				_dprintf("--------------------------------------\r\n");
 //				mask_bit |= 1UL << i;
 			}
 #if 0
@@ -98,49 +100,70 @@ void simple_memtest(void)
 			_dprintf("0x%x:\r\n", ptr);
 #endif
 	}
-	_dprintf("\b\b\b\b\b\b\b\b\b\n");
+	_dprintf("\b\b\b\b\b\b\b\b\b\r\n");
 	_dprintf("Done!   \r\n");
 
 	/* step xx. bit shift test */
-	_dprintf("Bit Shift  : \n");
-	_dprintf("Write  \n");
+	_dprintf("Bit Shift  : \r\n");
+	_dprintf("Write  \r\n");
 	ptr = start;
 	while (ptr < end) {
 		*ptr = (1UL << ((((MPTRS)ptr) & 0x1F << 2) >> 2));
 		ptr++;
 	}
-	_dprintf("\b\b\b\b\b\b\b\n");
+	_dprintf("\b\b\b\b\b\b\b\r\n");
 
-	_dprintf("Compare  \n");
+	_dprintf("Compare  \r\n");
 	ptr = start;
 	while (ptr < end) {
 		if (*ptr != (1UL << ((((MPTRS)ptr) & 0x1F << 2) >> 2)))
 			_dprintf("0x%x : 0x%x\r\n", ptr, *ptr);
 		ptr++;
 	}
-	_dprintf("\b\b\b\b\b\b\b\b\b\n");
+	_dprintf("\b\b\b\b\b\b\b\b\b\r\n");
 	_dprintf("Done!   \r\n");
 
 	/* step xx. reserve bit test */
-	_dprintf("Reverse Bit: \n");
-	_dprintf("Write  \n");
+	_dprintf("Reverse Bit: \r\n");
+	_dprintf("Write  \r\n");
 	ptr = start;
 	while (ptr < end) {
 		*ptr = ~(1UL << ((((MPTRS)ptr) & 0x1F << 2) >> 2));
 		ptr++;
 	}
-	_dprintf("\b\b\b\b\b\b\b\n");
+	_dprintf("\b\b\b\b\b\b\b\r\n");
 
-	_dprintf("Compare  \n");
+	_dprintf("Compare  \r\n");
 	ptr = start;
 	while (ptr < end) {
 		if (*ptr != ~(1UL << ((((MPTRS)ptr) & 0x1F << 2) >> 2)))
 			_dprintf("0x%x : 0x%x\r\n", ptr, *ptr);
 		ptr++;
 	}
-	_dprintf("\b\b\b\b\b\b\b\b\b\n");
+	_dprintf("\b\b\b\b\b\b\b\b\b\r\n");
 	_dprintf("Done!   \r\n");
 
 	_dprintf("############## Simple Memory Test Done!!! ###############\r\n");
 }
 
+
+void simple_memtest2(void)
+{
+	unsigned int* start, *end, *ptr;
+        unsigned int  count=0;
+        
+	start = ((unsigned char *)0x80000000);
+        end   = ((unsigned char *)0x80001000);
+	ptr = start;
+
+	_dprintf("############## Simple Memory Test2 Start!! ###############\r\n");
+
+	_dprintf("Read/Write : \r\n");
+	_dprintf("Write  \r\n");
+	while (ptr < end) {
+                *ptr = count++;
+                _dprintf("w=0x%x",(unsigned char)count);
+		ptr++;
+                _dprintf("r=0x%x",(unsigned char)*ptr);
+	}
+}

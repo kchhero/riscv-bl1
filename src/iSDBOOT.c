@@ -40,57 +40,57 @@
 
 #define NX_ASSERT(x)
 
-NX_SDMMC_RegisterSet * const pgSDXCReg[2] =
-    {
-        (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE,
-        (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC1_MODULE,
-    };
+/* NX_SDMMC_RegisterSet * const pgSDXCReg[2] = */
+/*     { */
+/*         (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE, */
+/*         (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC1_MODULE, */
+/*     }; */
 
-const union nxpad sdmmcpad[2][6] = {
-    {
-        {PADINDEX_OF_OSDMMC0_CDATA_0_},
-        {PADINDEX_OF_OSDMMC0_CDATA_1_},
-        {PADINDEX_OF_OSDMMC0_CDATA_2_},
-        {PADINDEX_OF_OSDMMC0_CDATA_3_},
-        {PADINDEX_OF_OSDMMC0_CCLK},
-        {PADINDEX_OF_OSDMMC0_CMD},
-    },
-    {
-        {PADINDEX_OF_OSDMMC1_CDATA_0_},
-        {PADINDEX_OF_OSDMMC1_CDATA_1_},
-        {PADINDEX_OF_OSDMMC1_CDATA_2_},
-        {PADINDEX_OF_OSDMMC1_CDATA_3_},
-        {PADINDEX_OF_OSDMMC1_CCLK},
-        {PADINDEX_OF_OSDMMC1_CMD},
-    }};
+/* const union nxpad sdmmcpad[2][6] = { */
+/*     { */
+/*         {PADINDEX_OF_OSDMMC0_CDATA_0_}, */
+/*         {PADINDEX_OF_OSDMMC0_CDATA_1_}, */
+/*         {PADINDEX_OF_OSDMMC0_CDATA_2_}, */
+/*         {PADINDEX_OF_OSDMMC0_CDATA_3_}, */
+/*         {PADINDEX_OF_OSDMMC0_CCLK}, */
+/*         {PADINDEX_OF_OSDMMC0_CMD}, */
+/*     }, */
+/*     { */
+/*         {PADINDEX_OF_OSDMMC1_CDATA_0_}, */
+/*         {PADINDEX_OF_OSDMMC1_CDATA_1_}, */
+/*         {PADINDEX_OF_OSDMMC1_CDATA_2_}, */
+/*         {PADINDEX_OF_OSDMMC1_CDATA_3_}, */
+/*         {PADINDEX_OF_OSDMMC1_CCLK}, */
+/*         {PADINDEX_OF_OSDMMC1_CMD}, */
+/*     }}; */
 
 //------------------------------------------------------------------------------
 int NX_SDMMC_SetClock(SDBOOTSTATUS *pSDXCBootStatus, int enb, int divider)
 {
     //QEMU does not necessary clock setting
 #ifdef QEMU_RISCV
-    _dprintf("[BL1-DEBUG]%s : nxSetDeviceClock cannot setting on QEMU mode\n", __func__);
+    _dprintf("[BL1-DEBUG]%s : nxSetDeviceClock cannot setting on QEMU mode\r\n", __func__);
     return 1;
 #else
     
     volatile unsigned int timeout;
     unsigned int i = pSDXCBootStatus->SDPort;
         
-    register NX_SDMMC_RegisterSet * const pSDXCReg = pgSDXCReg[i];
+    register NX_SDMMC_RegisterSet * const pSDXCReg = (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE;//pgSDXCReg[i];
 
     //--------------------------------------------------------------------------
     // 1. Confirm that no card is engaged in any transaction.
     //	If there's a transaction, wait until it has been finished.
 
 #if defined(DEBUG)
-    _dprintf("[BL1-DEBUG] %s start\n",__func__);
+    _dprintf("[BL1-DEBUG] %s start\r\n",__func__);
     if (pSDXCReg->STATUS & (NX_SDXC_STATUS_DATABUSY | NX_SDXC_STATUS_FSMBUSY))
         {
             if (pSDXCReg->STATUS & NX_SDXC_STATUS_DATABUSY)
                 _dprintf("[BL1-DEBUG]%s : ERROR - Data is busy\r\n", __func__);
 
             if (pSDXCReg->STATUS & NX_SDXC_STATUS_FSMBUSY)
-                _dprintf("[BL1-DEBUG]%s : ERROR - Data Transfer is busy\n", __func__);
+                _dprintf("[BL1-DEBUG]%s : ERROR - Data Transfer is busy\r\n", __func__);
 
             INFINTE_LOOP();
         }
@@ -178,10 +178,10 @@ unsigned int NX_SDMMC_SendCommandInternal(
 #ifndef QEMU_RISCV    
     volatile unsigned int	timeout;
 #endif    
-    register NX_SDMMC_RegisterSet * const pSDXCReg = pgSDXCReg[pSDXCBootStatus->SDPort];
+    register NX_SDMMC_RegisterSet * const pSDXCReg = (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE;//pgSDXCReg[pSDXCBootStatus->SDPort];
 
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] SendCommandInternal enter\n");
+    _dprintf("[BL1-DEBUG] SendCommandInternal enter\r\n");
 #endif
 
     NX_ASSERT(CNULL != pCommand);
@@ -313,7 +313,7 @@ unsigned int NX_SDMMC_SendStatus(SDBOOTSTATUS *pSDXCBootStatus)
         NX_SDXC_CMDFLAG_SHORTRSP;
 
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] SendStatus: cmd = 0x%x\n",&cmd);
+    _dprintf("[BL1-DEBUG] SendStatus: cmd = 0x%x\r\n",&cmd);
 #endif
 
     status = NX_SDMMC_SendCommandInternal(pSDXCBootStatus, &cmd);
@@ -321,62 +321,65 @@ unsigned int NX_SDMMC_SendStatus(SDBOOTSTATUS *pSDXCBootStatus)
     if (NX_SDMMC_STATUS_NOERROR == status)
         return status;
 
-#if defined(DEBUG) //&& !defined(SOC_SIM)
+#if defined(DEBUG) && !defined(SOC_SIM)
+    _dprintf("\t\t ERROR : status = 0x%x\r\n",status);
+    _dprintf("\t\t ERROR : Value = 0x%x\r\n",cmd.response[0]);
+
     if (cmd.response[0] & (1UL << 31))
-        _dprintf("\t\t ERROR : OUT_OF_RANGE\n");
+        _dprintf("\t\t ERROR : OUT_OF_RANGE\r\n");
     if (cmd.response[0] & (1UL << 30))
-        _dprintf("\t\t ERROR : ADDRESS_ERROR\n");
+        _dprintf("\t\t ERROR : ADDRESS_ERROR\r\n");
     if (cmd.response[0] & (1UL << 29))
-        _dprintf("\t\t ERROR : BLOCK_LEN_ERROR\n");
+        _dprintf("\t\t ERROR : BLOCK_LEN_ERROR\r\n");
     if (cmd.response[0] & (1UL << 28))
-        _dprintf("\t\t ERROR : ERASE_SEQ_ERROR\n");
+        _dprintf("\t\t ERROR : ERASE_SEQ_ERROR\r\n");
     if (cmd.response[0] & (1UL << 27))
-        _dprintf("\t\t ERROR : ERASE_PARAM\n");
+        _dprintf("\t\t ERROR : ERASE_PARAM\r\n");
     if (cmd.response[0] & (1UL << 26))
-        _dprintf("\t\t ERROR : WP_VIOLATION\n");
+        _dprintf("\t\t ERROR : WP_VIOLATION\r\n");
     if (cmd.response[0] & (1UL << 24))
-        _dprintf("\t\t ERROR : LOCK_UNLOCK_FAILED\n");
+        _dprintf("\t\t ERROR : LOCK_UNLOCK_FAILED\r\n");
     if (cmd.response[0] & (1UL << 23))
-        _dprintf("\t\t ERROR : COM_CRC_ERROR\n");
+        _dprintf("\t\t ERROR : COM_CRC_ERROR\r\n");
     if (cmd.response[0] & (1UL << 22))
-        _dprintf("\t\t ERROR : ILLEGAL_COMMAND\n");
+        _dprintf("\t\t ERROR : ILLEGAL_COMMAND\r\n");
     if (cmd.response[0] & (1UL << 21))
-        _dprintf("\t\t ERROR : CARD_ECC_FAILED\n");
+        _dprintf("\t\t ERROR : CARD_ECC_FAILED\r\n");
     if (cmd.response[0] & (1UL << 20))
-        _dprintf("\t\t ERROR : Internal Card Controller ERROR\n");
+        _dprintf("\t\t ERROR : Internal Card Controller ERROR\r\n");
     if (cmd.response[0] & (1UL << 19))
-        _dprintf("\t\t ERROR : General Error\n");
+        _dprintf("\t\t ERROR : General Error\r\n");
     if (cmd.response[0] & (1UL << 17))
-        _dprintf("\t\t ERROR : Deferred Response\n");
+        _dprintf("\t\t ERROR : Deferred Response\r\n");
     if (cmd.response[0] & (1UL << 16))
-        _dprintf("\t\t ERROR : CID/CSD_OVERWRITE_ERROR\n");
+        _dprintf("\t\t ERROR : CID/CSD_OVERWRITE_ERROR\r\n");
     if (cmd.response[0] & (1UL << 15))
-        _dprintf("\t\t ERROR : WP_ERASE_SKIP\n");
+        _dprintf("\t\t ERROR : WP_ERASE_SKIP\r\n");
     if (cmd.response[0] & (1UL << 3))
-        _dprintf("\t\t ERROR : AKE_SEQ_ERROR\n");
+        _dprintf("\t\t ERROR : AKE_SEQ_ERROR\r\n");
 
     switch ((cmd.response[0] >> 9) & 0xF) {
-    case 0: _dprintf("\t\t CURRENT_STATE : Idle\n");
+    case 0: _dprintf("\t\t CURRENT_STATE : Idle\r\n");
         break;
-    case 1: _dprintf("\t\t CURRENT_STATE : Ready\n");
+    case 1: _dprintf("\t\t CURRENT_STATE : Ready\r\n");
         break;
-    case 2: _dprintf("\t\t CURRENT_STATE : Identification\n");
+    case 2: _dprintf("\t\t CURRENT_STATE : Identification\r\n");
         break;
-    case 3: _dprintf("\t\t CURRENT_STATE : Standby\n");
+    case 3: _dprintf("\t\t CURRENT_STATE : Standby\r\n");
         break;
-    case 4: _dprintf("\t\t CURRENT_STATE : Transfer\n");
+    case 4: _dprintf("\t\t CURRENT_STATE : Transfer\r\n");
         break;
-    case 5: _dprintf("\t\t CURRENT_STATE : Data\n");
+    case 5: _dprintf("\t\t CURRENT_STATE : Data\r\n");
         break;
-    case 6: _dprintf("\t\t CURRENT_STATE : Receive\n");
+    case 6: _dprintf("\t\t CURRENT_STATE : Receive\r\n");
         break;
-    case 7: _dprintf("\t\t CURRENT_STATE : Programming\n");
+    case 7: _dprintf("\t\t CURRENT_STATE : Programming\r\n");
         break;
-    case 8: _dprintf("\t\t CURRENT_STATE : Disconnect\n");
+    case 8: _dprintf("\t\t CURRENT_STATE : Disconnect\r\n");
         break;
-    case 9: _dprintf("\t\t CURRENT_STATE : Sleep\n");
+    case 9: _dprintf("\t\t CURRENT_STATE : Sleep\r\n");
         break;
-    default: _dprintf("\t\t CURRENT_STATE : Reserved\n");
+    default: _dprintf("\t\t CURRENT_STATE : Reserved\r\n");
         break;
     }
 #endif
@@ -413,7 +416,7 @@ unsigned int NX_SDMMC_SendAppCommand(SDBOOTSTATUS *pSDXCBootStatus,
         NX_SDXC_CMDFLAG_SHORTRSP;
 
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] SendAppCommand\n");
+    _dprintf("[BL1-DEBUG] SendAppCommand\r\n");
 #endif
 
     status = NX_SDMMC_SendCommandInternal(pSDXCBootStatus, &cmd);
@@ -433,12 +436,16 @@ int NX_SDMMC_IdentifyCard(SDBOOTSTATUS *pSDXCBootStatus)
     unsigned int HCS, RCA;
     NX_SDMMC_CARDTYPE CardType = NX_SDMMC_CARDTYPE_UNKNOWN;
     NX_SDMMC_COMMAND cmd;
-    NX_SDMMC_RegisterSet * const pSDXCReg = pgSDXCReg[pSDXCBootStatus->SDPort];
+    NX_SDMMC_RegisterSet * const pSDXCReg = (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE;//pgSDXCReg[pSDXCBootStatus->SDPort];
+    //    int nErrType = NX_SDMMC_STATUS_NOERROR;
 
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] IdentifyCard enter\n");
+    _dprintf("[BL1-DEBUG] IdentifyCard enter, port=0x%x\r\n",pSDXCBootStatus->SDPort);
+    _dprintf("[BL1-DEBUG] pSDXCReg=0x%x\r\n",*pSDXCReg);
 #endif
-        
+
+    pSDXCReg->RSTn = 0;         // Hardware reset, 0:reset, 1:Active Mode
+    
     if (0 == NX_SDMMC_SetClock(pSDXCBootStatus,1,SDCLK_DIVIDER_400KHZ))
         return 0;
 
@@ -458,8 +465,8 @@ int NX_SDMMC_IdentifyCard(SDBOOTSTATUS *pSDXCBootStatus)
         NX_SDXC_CMDFLAG_STOPABORT;
 
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] IdentifyCard: cmd = 0x%x\n",&cmd);
-    _dprintf("[BL1-DEBUG] IdentifyCard: cmd.flag = 0x%x\n",cmd.flag);
+    _dprintf("[BL1-DEBUG] IdentifyCard: cmd = 0x%x\r\n",&cmd);
+    _dprintf("[BL1-DEBUG] IdentifyCard: cmd.flag = 0x%x\r\n",cmd.flag);
 #endif
     NX_SDMMC_SendCommand(pSDXCBootStatus, &cmd);
 
@@ -472,6 +479,18 @@ int NX_SDMMC_IdentifyCard(SDBOOTSTATUS *pSDXCBootStatus)
         NX_SDXC_CMDFLAG_CHKRSPCRC |
         NX_SDXC_CMDFLAG_SHORTRSP;
 
+    _dprintf("[BL1-DEBUG] IdentifyCard 1\r\n");
+//new------------------------------------------------------------------------------------
+    /* int retrycount = 5; */
+    /* do { */
+    /*     nErrType = NX_SDMMC_SendCommandInternal(pSDXCBootStatus, &cmd); */
+    /*     if (nErrType == NX_SDMMC_STATUS_NOERROR || retrycount <= 0) { */
+    /*         break; */
+    /*     } */
+    /*     _dprintf("retry..."); */
+    /*     retrycount--; */
+    /* } while(1); */
+//new------------------------------------------------------------------------------------
     if (NX_SDMMC_STATUS_NOERROR ==
         NX_SDMMC_SendCommandInternal(pSDXCBootStatus, &cmd)) {
         // Ver 2.0 or later SD Memory Card
@@ -481,9 +500,11 @@ int NX_SDMMC_IdentifyCard(SDBOOTSTATUS *pSDXCBootStatus)
         HCS = 1 << 30;
     } else {
         // voltage mismatch or Ver 1.X SD Memory Card or not SD Memory Card
+        _dprintf("[BL1-DEBUG] voltage mismatch or Ver 1.X SD Memory Card or not SD Memory Card\r\n");
         HCS = 0;
     }
 
+    _dprintf("[BL1-DEBUG] IdentifyCard 2\r\n");
     //--------------------------------------------------------------------------
     // voltage validation
 #ifndef QEMU_RISCV
@@ -509,8 +530,8 @@ int NX_SDMMC_IdentifyCard(SDBOOTSTATUS *pSDXCBootStatus)
             NX_SDXC_CMDFLAG_SHORTRSP;
 
         if (NX_SDMMC_STATUS_NOERROR !=
-            NX_SDMMC_SendCommandInternal(
-                                         pSDXCBootStatus, &cmd)) {
+            NX_SDMMC_SendCommandInternal(pSDXCBootStatus, &cmd)) {
+            _dprintf("[BL1-DEBUG] SD memory card indentify fail\r\n");
             return 0;
         }
 #ifndef QEMU_RISCV
@@ -531,11 +552,12 @@ int NX_SDMMC_IdentifyCard(SDBOOTSTATUS *pSDXCBootStatus)
         }
 #endif
 #ifdef DEBUG
-        _dprintf("---- SD ----\n");
+        _dprintf("---- SD ----\r\n");
 #endif
         CardType	= NX_SDMMC_CARDTYPE_SDMEM;
         RCA		= 0;
     } else {
+        _dprintf("[BL1-DEBUG] MMC memory card\r\n");
         //----------------------------------------------------------------------
         // MMC memory card
         cmd.cmdidx	= GO_IDLE_STATE;
@@ -569,8 +591,8 @@ int NX_SDMMC_IdentifyCard(SDBOOTSTATUS *pSDXCBootStatus)
 #endif
 
 #if defined(DEBUG)
-        _dprintf("---- MMC ----\n");
-        _dprintf("--> SEND_OP_COND Response = 0x%X\n", cmd.response[0]);
+        _dprintf("---- MMC ----\r\n");
+        _dprintf("--> SEND_OP_COND Response = 0x%X\r\n", cmd.response[0]);
 #endif
 
         CardType	= NX_SDMMC_CARDTYPE_MMC;
@@ -624,7 +646,7 @@ int NX_SDMMC_IdentifyCard(SDBOOTSTATUS *pSDXCBootStatus)
     pSDXCBootStatus->CardType = CardType;
 
 #if defined(DEBUG)
-    _dprintf("[BL1-DEBUG] CardType = 0x%x\n",CardType);
+    _dprintf("[BL1-DEBUG] CardType = 0x%x\r\n",CardType);
 #endif
     
     return 1;
@@ -673,13 +695,13 @@ int NX_SDMMC_SetBusWidth(SDBOOTSTATUS *pSDXCBootStatus,
 {
     unsigned int status;
     NX_SDMMC_COMMAND cmd;
-    register NX_SDMMC_RegisterSet * const pSDXCReg = pgSDXCReg[pSDXCBootStatus->SDPort];
+    register NX_SDMMC_RegisterSet * const pSDXCReg = (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE;//pgSDXCReg[pSDXCBootStatus->SDPort];
 
     NX_ASSERT( buswidth==1 || buswidth==4 );
 
     if (pSDXCBootStatus->CardType == NX_SDMMC_CARDTYPE_SDMEM) {
 #ifdef DEBUG
-        _dprintf("[BL1-DEBUG] BootStatus CardType NX_SDMMC_CARDTYPE_SDMEM\n");
+        _dprintf("[BL1-DEBUG] BootStatus CardType NX_SDMMC_CARDTYPE_SDMEM\r\n");
 #endif
         cmd.cmdidx	= SET_BUS_WIDTH;
         cmd.arg		= (buswidth >> 1);
@@ -690,7 +712,7 @@ int NX_SDMMC_SetBusWidth(SDBOOTSTATUS *pSDXCBootStatus,
         status = NX_SDMMC_SendAppCommand(pSDXCBootStatus, &cmd);
     } else {
 #ifdef DEBUG
-        _dprintf("[BL1-DEBUG] BootStatus CardType another\n");
+        _dprintf("[BL1-DEBUG] BootStatus CardType another\r\n");
 #endif
         /* ExtCSD[183] : BUS_WIDTH <= 0 : 1-bit, 1 : 4-bit, 2 : 8-bit */
         cmd.cmdidx	= SWITCH_FUNC;
@@ -721,8 +743,8 @@ int NX_SDMMC_SetBlockLength(SDBOOTSTATUS *pSDXCBootStatus,
 {
     unsigned int status;
     NX_SDMMC_COMMAND cmd;
-    register NX_SDMMC_RegisterSet * const pSDXCReg =
-        pgSDXCReg[pSDXCBootStatus->SDPort];
+    register NX_SDMMC_RegisterSet * const pSDXCReg = (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE;
+    //        pgSDXCReg[pSDXCBootStatus->SDPort];
 
     cmd.cmdidx	= SET_BLOCKLEN;
     cmd.arg		= blocklength;
@@ -744,14 +766,13 @@ int NX_SDMMC_SetBlockLength(SDBOOTSTATUS *pSDXCBootStatus,
 int NX_SDMMC_Init(SDBOOTSTATUS *pSDXCBootStatus)
 {
     unsigned int i = pSDXCBootStatus->SDPort;
-    register NX_SDMMC_RegisterSet * const pSDXCReg = pgSDXCReg[i];
+    register NX_SDMMC_RegisterSet * const pSDXCReg = (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE;//pgSDXCReg[i];
 
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] Init start \r\n");
+    _dprintf("[BL1-DEBUG] Init start, port=0x%x \r\n",pSDXCBootStatus->SDPort);
 #endif
 
     pSDXCReg->PWREN = 0 << 0;	// Set Power Disable
-
     pSDXCReg->CLKENA = NX_SDXC_CLKENA_LOWPWR;// low power mode & clock disable
 
     pSDXCReg->TIEDRVPHASE = NX_SDMMC_CLOCK_SHIFT_180 << 8;
@@ -803,8 +824,8 @@ int NX_SDMMC_Init(SDBOOTSTATUS *pSDXCBootStatus)
 //------------------------------------------------------------------------------
 int NX_SDMMC_Terminate(SDBOOTSTATUS *pSDXCBootStatus)
 {
-    register NX_SDMMC_RegisterSet * const pSDXCReg =
-        pgSDXCReg[pSDXCBootStatus->SDPort];
+    register NX_SDMMC_RegisterSet * const pSDXCReg = (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE;
+    //        pgSDXCReg[pSDXCBootStatus->SDPort];
     
     // Clear All interrupts
     pSDXCReg->RINTSTS = 0xFFFFFFFF;
@@ -830,7 +851,7 @@ int NX_SDMMC_Terminate(SDBOOTSTATUS *pSDXCBootStatus)
 int NX_SDMMC_Open(SDBOOTSTATUS *pSDXCBootStatus)
 {
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] NX_SDMMC_Open step1\n");
+    _dprintf("[BL1-DEBUG] NX_SDMMC_Open step1\r\n");
 #endif
 
 #ifdef QEMU_RISCV
@@ -847,7 +868,7 @@ int NX_SDMMC_Open(SDBOOTSTATUS *pSDXCBootStatus)
     }
 
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] NX_SDMMC_Open step2\n");
+    _dprintf("[BL1-DEBUG] NX_SDMMC_Open step2\r\n");
 #endif
     
     //--------------------------------------------------------------------------
@@ -883,7 +904,7 @@ int NX_SDMMC_Open(SDBOOTSTATUS *pSDXCBootStatus)
 int NX_SDMMC_Close(SDBOOTSTATUS *pSDXCBootStatus)
 {
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] NX_SDMMC_Close\n");
+    _dprintf("[BL1-DEBUG] NX_SDMMC_Close\r\n");
 #endif
     
     NX_SDMMC_SetClock(pSDXCBootStatus, 0, SDCLK_DIVIDER_400KHZ);
@@ -903,16 +924,16 @@ int NX_SDMMC_ReadSectorData(
     unsigned int i = 0;
     unsigned int *temp;
     unsigned int seek_qemu = step * 512;
-    register NX_SDMMC_RegisterSet * const pSDXCReg = pgSDXCReg[pSDXCBootStatus->SDPort];
+    register NX_SDMMC_RegisterSet * const pSDXCReg = (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE;//pgSDXCReg[pSDXCBootStatus->SDPort];
 
     if (seek_qemu > sd_body_size)
         return 0;
     
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] ---- start ---- %s\n",__func__);
-    _dprintf("[BL1-DEBUG] ---------------------------------------\n");
-    _dprintf("[BL1-DEBUG] %s pdwBuffer start addr = 0x%x\n",__func__, pdwBuffer);
-    _dprintf("[BL1-DEBUG] ---------------------------------------\n");
+    _dprintf("[BL1-DEBUG] ---- start ---- %s\r\n",__func__);
+    _dprintf("[BL1-DEBUG] ---------------------------------------\r\n");
+    _dprintf("[BL1-DEBUG] %s pdwBuffer start addr = 0x%x\r\n",__func__, pdwBuffer);
+    _dprintf("[BL1-DEBUG] ---------------------------------------\r\n");
 #endif
         
     NX_ASSERT(0 == ((unsigned int)pdwBuffer & 3));
@@ -924,8 +945,8 @@ int NX_SDMMC_ReadSectorData(
     for(unsigned int j = seek_qemu; j < count; j++) {
         _dprintf("%c",(unsigned char)(sd_body[j]));
     }
-    _dprintf("*****************************************\n\n");
-    _dprintf("**************copy to pdwbuffer*******\n",__func__);
+    _dprintf("*****************************************\r\n\r\n");
+    _dprintf("**************copy to pdwbuffer*******\r\n",__func__);
 #endif
 
     while (0 < count) {
@@ -940,8 +961,8 @@ int NX_SDMMC_ReadSectorData(
     pSDXCReg->RINTSTS = NX_SDXC_RINTSTS_DTO;
 
 #ifdef DEBUG
-    _dprintf("*************************************\n",__func__);
-    _dprintf("\n[BL1-DEBUG] %s ---- end ----\n\n",__func__);
+    _dprintf("*************************************\r\n",__func__);
+    _dprintf("\r\n[BL1-DEBUG] %s ---- end ----\r\n\r\n",__func__);
 #endif
 
     return 1;
@@ -957,23 +978,23 @@ int NX_SDMMC_ReadSectorData(
     unsigned int		count;
     volatile unsigned int       temp = 0;
     
-    register NX_SDMMC_RegisterSet * const pSDXCReg = pgSDXCReg[pSDXCBootStatus->SDPort];
+    register NX_SDMMC_RegisterSet * const pSDXCReg = (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE;//pgSDXCReg[pSDXCBootStatus->SDPort];
 #ifdef DEBUG
     unsigned int                _cnt = 0;
 
-    _dprintf("ReadSectorData : numberOfSector= 0x%x\n",numberOfSector);
-    _dprintf("ReadSectorData : BLOCK_LENGTH = 0x%x\n",BLOCK_LENGTH);    
+    _dprintf("ReadSectorData : numberOfSector= 0x%x\r\n",numberOfSector);
+    _dprintf("ReadSectorData : BLOCK_LENGTH = 0x%x\r\n",BLOCK_LENGTH);    
 #endif
     NX_ASSERT(0 == ((unsigned int)pdwBuffer & 3));
 
     count = numberOfSector * BLOCK_LENGTH;
-    //_dprintf("ReadSectorData : total count = 0x%x\n",count);
+    //_dprintf("ReadSectorData : total count = 0x%x\r\n",count);
     
     NX_ASSERT(0 == (count % 32));
 
     while (0 < count) {
 #ifdef DEBUG
-        _dprintf("ReadSectorData : Try 0x%x\n",_cnt++);
+        _dprintf("ReadSectorData : Try 0x%x\r\n",_cnt++);
 #endif
         if ((pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_RXDR) || (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_DTO)) {            
             unsigned int FSize, Timeout = NX_SDMMC_TIMEOUT;
@@ -982,16 +1003,16 @@ int NX_SDMMC_ReadSectorData(
                 pSDXCReg->STATUS;
             }
             if (0 == Timeout) {
-                //_dprintf("ReadSectorData : Timeout 0!!\n");
+                //_dprintf("ReadSectorData : Timeout 0!!\r\n");
                 break;
             }
             FSize = (pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOCOUNT) >> 17;
 #ifdef DEBUG            
-            _dprintf("ReadSectorData : FSize = 0x%x\n",FSize);
+            _dprintf("ReadSectorData : FSize = 0x%x\r\n",FSize);
 #endif
             count -= (FSize * 4);
 #ifdef DEBUG
-            _dprintf("ReadSectorData : left count = 0x%x\n",count);
+            _dprintf("ReadSectorData : left count = 0x%x\r\n",count);
 #endif
             
             while (FSize) {
@@ -1009,7 +1030,7 @@ int NX_SDMMC_ReadSectorData(
                     NX_SDXC_RINTSTS_SBE |
                     NX_SDXC_RINTSTS_DCRC)) {
 #if DEBUG
-            _dprintf("Read left = %x\n", count);
+            _dprintf("Read left = %x\r\n", count);
 
             if (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_DRTO)
                 _dprintf("DRTO\r\n");
@@ -1053,11 +1074,11 @@ int NX_SDMMC_ReadSectors(SDBOOTSTATUS *pSDXCBootStatus,
     int	result = 0;
     unsigned int    status;
     NX_SDMMC_COMMAND cmd;
-    register NX_SDMMC_RegisterSet * const pSDXCReg = pgSDXCReg[pSDXCBootStatus->SDPort];
+    register NX_SDMMC_RegisterSet * const pSDXCReg = (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE;//pgSDXCReg[pSDXCBootStatus->SDPort];
         
     NX_ASSERT(0 == ((unsigned int)pdwBuffer & 3));
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] ReadSectors enter\n");
+    _dprintf("[BL1-DEBUG] ReadSectors enter\r\n");
 #endif
     // wait while data busy or data transfer busy
     while (pSDXCReg->STATUS & (1 << 9 | 1 << 10))
@@ -1074,7 +1095,7 @@ int NX_SDMMC_ReadSectors(SDBOOTSTATUS *pSDXCBootStatus,
             NX_SDXC_CMDFLAG_SHORTRSP;
         status = NX_SDMMC_SendCommand(pSDXCBootStatus, &cmd);
         if (NX_SDMMC_STATUS_NOERROR != status) {
-            //_dprintf("[BL1-DEBUG] NX_SDMMC_STATUS_NOERROR != status\n");
+            //_dprintf("[BL1-DEBUG] NX_SDMMC_STATUS_NOERROR != status\r\n");
             goto End;
         }
     } while (!((cmd.response[0] & (1 << 8)) &&
@@ -1122,13 +1143,13 @@ int NX_SDMMC_ReadSectors(SDBOOTSTATUS *pSDXCBootStatus,
 
 #ifndef QEMU_RISCV
     if (NX_SDMMC_STATUS_NOERROR != status) {
-        //_dprintf("[BL1-DEBUG] NX_SDMMC_STATUS_NOERROR != status 2\n");
+        //_dprintf("[BL1-DEBUG] NX_SDMMC_STATUS_NOERROR != status 2\r\n");
         goto End;
     }
     //--------------------------------------------------------------------------
     // Read data
     if (1 != NX_SDMMC_ReadSectorData(pSDXCBootStatus, numberOfSector, pdwBuffer)) {
-        //_dprintf("[BL1-DEBUG] ReadSectorData Fail\n");
+        //_dprintf("[BL1-DEBUG] ReadSectorData Fail\r\n");
         goto End;
     }
 #else
@@ -1157,7 +1178,7 @@ int NX_SDMMC_ReadSectors(SDBOOTSTATUS *pSDXCBootStatus,
 
         /*             response = pSDXCReg->RESP[1]; */
         /*             if (response & 0xFDF98008) { */
-        /*                 _dprintf("Auto Stop Resp Fail:%x\r\n", response); */
+        /*                 _dprintf("Auto Stop Resp Fail:%x\r\r\n", response); */
         /*                 //goto End; */
         /*             } */
         /*         } */
@@ -1200,7 +1221,7 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     unsigned int bl1BinSize = 0;
     unsigned int bblBinSize = 0;
     unsigned int dtbBinSize = 0;
-    NX_SDMMC_RegisterSet * const pSDXCReg = pgSDXCReg[pSDXCBootStatus->SDPort];
+    NX_SDMMC_RegisterSet * const pSDXCReg = (NX_SDMMC_RegisterSet *)PHY_BASEADDR_SDMMC0_MODULE;//pgSDXCReg[pSDXCBootStatus->SDPort];
 
     unsigned int *pVectorTableSector = (unsigned int *)(VECTOR_ADDR);    
     unsigned int *pBL1Sector = (unsigned int *)&(bl1BootMem)->bi;
@@ -1212,7 +1233,7 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     struct nx_bootinfo *pBBLBootInfo = &(bblBootMem)->bi;
 
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] SDMMCBOOT start\n");
+    _dprintf("[BL1-DEBUG] SDMMCBOOT start\r\n");
 #endif
 
     if (1 != NX_SDMMC_Open(pSDXCBootStatus)) {
@@ -1240,21 +1261,21 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     // BL1 NSIH sector 1 of BL1
     //---------------------------------------------------------------------------
 #ifdef DEBUG
-    _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++++++\n");
-    _dprintf("[BL1-DEBUG] BL1 NSIH header reload\n");
-    _dprintf("[BL1-DEBUG]++++++++++++++++++++++++++++\n");
-    _dprintf("[BL1-DEBUG] rsn = 0x%x\n",rsn);
+    _dprintf("\r\n[BL1-DEBUG]++++++++++++++++++++++++++++\r\n");
+    _dprintf("[BL1-DEBUG] BL1 NSIH header reload\r\n");
+    _dprintf("[BL1-DEBUG]++++++++++++++++++++++++++++\r\n");
+    _dprintf("[BL1-DEBUG] rsn = 0x%x\r\n",rsn);
 #endif
     if (NX_SDMMC_ReadSectors(pSDXCBootStatus, rsn++, 1, pBL1Sector) == 0) {
 #ifdef DEBUG
-        _dprintf("NSIH read fail.\n");
+        _dprintf("NSIH read fail.\r\n");
 #endif
     }
 
 /* #ifdef DEBUG //BL1 NSIH check */
 /*     { */
 /*         unsigned int* temp = (unsigned int*)(BASEADDR_DRAM); */
-/*         _dprintf("128 byte bl1 NSIH values are below ---\n"); */
+/*         _dprintf("128 byte bl1 NSIH values are below ---\r\n"); */
 /*         for (unsigned int i = 0; i < 128; i++) { */
 /*             _dprintf("%x ",*(temp+i)); */
 /*         } */
@@ -1269,18 +1290,18 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     pDTBSector = pBL1BootInfo->dtbLoadAddr;
 
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] BL1 NSIH load addr = 0x%x\n",pBL1BootInfo->LoadAddr);
-    _dprintf("[BL1-DEBUG] DTB BIN size = 0x%x\n",dtbBinSize);
-    _dprintf("[BL1-DEBUG] DTB BIN load addr = 0x%x\n",pDTBSector);
+    _dprintf("[BL1-DEBUG] BL1 NSIH load addr = 0x%x\r\n",pBL1BootInfo->LoadAddr);
+    _dprintf("[BL1-DEBUG] DTB BIN size = 0x%x\r\n",dtbBinSize);
+    _dprintf("[BL1-DEBUG] DTB BIN load addr = 0x%x\r\n",pDTBSector);
 #endif
 
     if (pBL1BootInfo->signature != HEADER_ID) {
 #ifdef DEBUG
-        _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++++++\n");
-        _dprintf("[BL1-DEBUG] BL1 NSIH header check\n");
-        _dprintf("[BL1-DEBUG]++++++++++++++++++++++++++++\n");
-        _dprintf("[BL1-DEBUG] bl1 pbi sifnature addr = %x\n", &(pBL1BootInfo->signature));
-        _dprintf("[BL1-DEBUG] bl1 expected HEADER_ID = %x\n", HEADER_ID);
+        _dprintf("\r\n[BL1-DEBUG]++++++++++++++++++++++++++++\r\n");
+        _dprintf("[BL1-DEBUG] BL1 NSIH header check\r\n");
+        _dprintf("[BL1-DEBUG]++++++++++++++++++++++++++++\r\n");
+        _dprintf("[BL1-DEBUG] bl1 pbi sifnature addr = %x\r\n", &(pBL1BootInfo->signature));
+        _dprintf("[BL1-DEBUG] bl1 expected HEADER_ID = %x\r\n", HEADER_ID);
 #endif        
         return 0;
     }
@@ -1301,22 +1322,22 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     // Vector Binary Loading to SRAM offset 0x7000 (4KB region) = BLOCK_LENGTH*8 = 512 * 8
     //-------------------------------------------------------------------------------------------------------------
 #ifdef DEBUG
-    _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++++++\n");
-    _dprintf("[BL1-DEBUG] VECTOR loading in addr = 0x%x\n",pVectorTableSector);
-    _dprintf("[BL1-DEBUG]++++++++++++++++++++++++++++\n");
+    _dprintf("\r\n[BL1-DEBUG]++++++++++++++++++++++++++++\r\n");
+    _dprintf("[BL1-DEBUG] VECTOR loading in addr = 0x%x\r\n",pVectorTableSector);
+    _dprintf("[BL1-DEBUG]++++++++++++++++++++++++++++\r\n");
 #endif
 
     unsigned int vectorBinSectorSize = (4096 + BLOCK_LENGTH - 1) / BLOCK_LENGTH;
     
     if (NX_SDMMC_ReadSectors(pSDXCBootStatus, rsn, vectorBinSectorSize, pVectorTableSector) == 0) {
 #ifdef DEBUG
-        _dprintf("Vector Table read fail.\n");
+        _dprintf("Vector Table read fail.\r\n");
 #endif
     }
 #ifdef DEBUG
     {
         unsigned int* temp = (unsigned int*)(0x40007000);
-        _dprintf("128 byte vector table region values are below ---\n");
+        _dprintf("128 byte vector table region values are below ---\r\n");
         for (unsigned int i = 0; i < 128; i++) {
             _dprintf("%x ",*(temp+i));
         }
@@ -1342,7 +1363,7 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
 #ifdef DEBUG
     {
         unsigned int* temp = (unsigned int*)pDTBSector;
-        _dprintf("128 byte DTB values are below ---\n");
+        _dprintf("128 byte DTB values are below ---\r\n");
         for (unsigned int i = 0; i < 128; i++) {
             _dprintf("%x ",*(temp+i));
         }
@@ -1356,10 +1377,10 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     //-------------------------------------------------------------------------------------------------------------
     // BBL NSIH 512byte read
 #ifdef DEBUG
-    _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++\n");
-    _dprintf("[BL1-DEBUG] BBL NSIH header read\n");
-    _dprintf("[BL1-DEBUG]++++++++++++++++++++++++\n");
-    _dprintf("[BL1-DEBUG] seek vector table, rsn = 0x%x\n",rsn);
+    _dprintf("\r\n[BL1-DEBUG]++++++++++++++++++++++++\r\n");
+    _dprintf("[BL1-DEBUG] BBL NSIH header read\r\n");
+    _dprintf("[BL1-DEBUG]++++++++++++++++++++++++\r\n");
+    _dprintf("[BL1-DEBUG] seek vector table, rsn = 0x%x\r\n",rsn);
 #endif
 
     result = NX_SDMMC_ReadSectors(pSDXCBootStatus, rsn++, 1, pBBLSector);
@@ -1367,7 +1388,7 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
 #ifdef DEBUG
     {
         unsigned int* temp = (unsigned int*)(BASEADDR_DRAM);
-        _dprintf("128 byte bbl NSIH values are below ---\n");
+        _dprintf("128 byte bbl NSIH values are below ---\r\n");
         for (unsigned int i = 0; i < 128; i++) {
             _dprintf("%x ",*(temp+i));
         }
@@ -1376,16 +1397,16 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     //-------------------------------------------------------------------------------------------------------------
     
 #ifdef DEBUG
-    _dprintf("\n[BL1-DEBUG]++++++++++++++++++++++++++++\n");
-    _dprintf("[BL1-DEBUG] BBL BODY binary read to pData\n");
-    _dprintf("[BL1-DEBUG]++++++++++++++++++++++++++++\n");
-    _dprintf("[BL1-DEBUG] rsn = 0x%x\n",rsn);
+    _dprintf("\r\n[BL1-DEBUG]++++++++++++++++++++++++++++\r\n");
+    _dprintf("[BL1-DEBUG] BBL BODY binary read to pData\r\n");
+    _dprintf("[BL1-DEBUG]++++++++++++++++++++++++++++\r\n");
+    _dprintf("[BL1-DEBUG] rsn = 0x%x\r\n",rsn);
 #endif
 
     bblBinSize = pBBLBootInfo->LoadSize;
     if (pBBLBootInfo->signature != HEADER_ID) {
 #ifdef DEBUG
-        _dprintf("[BL1-DEBUG] bbl expected HEADER_ID = %x\n", HEADER_ID);
+        _dprintf("[BL1-DEBUG] bbl expected HEADER_ID = %x\r\n", HEADER_ID);
 #endif
         return 0;
     }
@@ -1401,9 +1422,9 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
     unsigned int bblBodySectorsize = (bblBinSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH;
 
 #ifdef DEBUG
-    _dprintf("[BL1-DEBUG] BBL image size = 0x%x\n",bblBinSize);
-    _dprintf("[BL1-DEBUG] pData addr = 0x%x\n",pBBLSector);
-    _dprintf("[BL1-DEBUG] bblBodySectorsize = 0x%x\n",bblBodySectorsize);
+    _dprintf("[BL1-DEBUG] BBL image size = 0x%x\r\n",bblBinSize);
+    _dprintf("[BL1-DEBUG] pData addr = 0x%x\r\n",pBBLSector);
+    _dprintf("[BL1-DEBUG] bblBodySectorsize = 0x%x\r\n",bblBodySectorsize);
 #endif
 
     //---------------------------------------------------------------------------
@@ -1414,8 +1435,8 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
 #ifdef DEBUG
     {
         unsigned int* temp = (unsigned int*)(pBBLSector);// + BLOCK_LENGTH);
-        _dprintf("128 byte bbl BODY values are below ---\n");
-        _dprintf("temp addr = 0x%x\n",temp);
+        _dprintf("128 byte bbl BODY values are below ---\r\n");
+        _dprintf("temp addr = 0x%x\r\n",temp);
         for (unsigned int i = 0; i < 128; i++) {
             _dprintf("%x ",*(temp+i));
         }
@@ -1432,12 +1453,56 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
 
 void NX_SDPADSetALT(unsigned int PortNum)
 {
-    setpad(sdmmcpad[PortNum], 6, 1);
+ struct nxpadi sdmmc0_gpio_0 = { 1, 0, 0, 1 };
+ struct nxpadi sdmmc0_gpio_1 = { 1, 1, 0, 1 };
+ struct nxpadi sdmmc0_gpio_2 = { 1, 2, 0, 1 };
+ struct nxpadi sdmmc0_gpio_3 = { 1, 3, 0, 1 };
+ struct nxpadi sdmmc0_gpio_4 = { 1, 4, 0, 1 };
+ struct nxpadi sdmmc0_gpio_5 = { 1, 6, 0, 1 };
+
+ /* _dprintf("SDMMC_pad00_ref = 0x%x\r\n", PADINDEX_OF_OSDMMC0_CDATA_0_); //SDMMC_pad00_ref = 0x10001 */
+ /* _dprintf("SDMMC_pad00_ref = 0x%x\r\n", PADINDEX_OF_OSDMMC0_CDATA_1_); //SDMMC_pad00_ref = 0x10009 */
+ /* _dprintf("SDMMC_pad00_ref = 0x%x\r\n", PADINDEX_OF_OSDMMC0_CDATA_2_); //SDMMC_pad00_ref = 0x10011 */
+ /* _dprintf("SDMMC_pad00_ref = 0x%x\r\n", PADINDEX_OF_OSDMMC0_CDATA_3_); //SDMMC_pad00_ref = 0x10019 */
+ /* _dprintf("SDMMC_pad00_ref = 0x%x\r\n", PADINDEX_OF_OSDMMC0_CCLK);     //SDMMC_pad00_ref = 0x10021 */
+ /* _dprintf("SDMMC_pad00_ref = 0x%x\r\n", PADINDEX_OF_OSDMMC0_CMD);      //SDMMC_pad00_ref = 0x10031 */
+
+ setpadEx(sdmmc0_gpio_0, 1);
+ setpadEx(sdmmc0_gpio_1, 1);
+ setpadEx(sdmmc0_gpio_2, 1);
+ setpadEx(sdmmc0_gpio_3, 1);
+ setpadEx(sdmmc0_gpio_4, 1);
+ setpadEx(sdmmc0_gpio_5, 1);
+    /* setpad(sdmmcpad[PortNum][0].padi, 1); */
+    /* setpad(sdmmcpad[PortNum][1].padi, 1); */
+    /* setpad(sdmmcpad[PortNum][2].padi, 1); */
+    /* setpad(sdmmcpad[PortNum][3].padi, 1); */
+    /* setpad(sdmmcpad[PortNum][4].padi, 1); */
+    /* setpad(sdmmcpad[PortNum][5].padi, 1); */
 }
 
 void NX_SDPADSetGPIO(unsigned int PortNum)
 {
-    setpad(sdmmcpad[PortNum], 6, 0);
+ struct nxpadi sdmmc0_gpio_0 = { 1, 0, 0, 1 };
+ struct nxpadi sdmmc0_gpio_1 = { 1, 1, 0, 1 };
+ struct nxpadi sdmmc0_gpio_2 = { 1, 2, 0, 1 };
+ struct nxpadi sdmmc0_gpio_3 = { 1, 3, 0, 1 };
+ struct nxpadi sdmmc0_gpio_4 = { 1, 4, 0, 1 };
+ struct nxpadi sdmmc0_gpio_5 = { 1, 6, 0, 1 };
+
+ setpadEx(sdmmc0_gpio_0, 0);
+ setpadEx(sdmmc0_gpio_1, 0);
+ setpadEx(sdmmc0_gpio_2, 0);
+ setpadEx(sdmmc0_gpio_3, 0);
+ setpadEx(sdmmc0_gpio_4, 0);
+ setpadEx(sdmmc0_gpio_5, 0);
+
+    /* setpad(sdmmcpad[PortNum][0].padi, 0); */
+    /* setpad(sdmmcpad[PortNum][1].padi, 0); */
+    /* setpad(sdmmcpad[PortNum][2].padi, 0); */
+    /* setpad(sdmmcpad[PortNum][3].padi, 0); */
+    /* setpad(sdmmcpad[PortNum][4].padi, 0); */
+    /* setpad(sdmmcpad[PortNum][5].padi, 0); */
 }
 
 //------------------------------------------------------------------------------
@@ -1456,12 +1521,12 @@ unsigned int iSDBOOT(void)
 #endif
     pSDXCBootStatus->SDPort = 0;
     pSDXCBootStatus->bHighSpeed = 0;
-    
+
     NX_SDPADSetALT(pSDXCBootStatus->SDPort);
     NX_SDMMC_Init(pSDXCBootStatus);
-
+    
     result = SDMMCBOOT(pSDXCBootStatus);
-
+    
     NX_SDMMC_Close(pSDXCBootStatus);
     NX_SDMMC_Terminate(pSDXCBootStatus);
 

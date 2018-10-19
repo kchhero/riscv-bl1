@@ -20,6 +20,21 @@ extern "C"
 #define WriteIOW(Addr,Data) (*(volatile unsigned short*)Addr)=((unsigned short)Data)
 #define WriteIOB(Addr,Data) (*(volatile unsigned char*)Addr)=((unsigned char)Data)
 
+#define mmio_read_32(addr)              (*(volatile unsigned int  *)(addr))
+#define mmio_read_16(addr)              (*(volatile unsigned short*)(addr))
+#define mmio_read_8(addr)               (*(volatile unsigned char *)(addr))
+
+#define mmio_write_32(addr,data)        (*(volatile unsigned int  *)(addr))  =  ((unsigned int  )(data))
+#define mmio_write_16(addr,data)        (*(volatile unsigned short*)(addr))  =  ((unsigned short)(data))
+#define mmio_write_8(addr,data)         (*(volatile unsigned char *)(addr))  =  ((unsigned char )(data))
+
+#define mmio_set_32(addr,data)          (*(volatile unsigned int  *)(addr)) |=  ((unsigned int  )(data))
+#define mmio_set_16(addr,data)          (*(volatile unsigned short*)(addr)) |=  ((unsigned short)(data))
+#define mmio_set_8(addr,data)           (*(volatile unsigned char *)(addr)) |=  ((unsigned char )(data))
+
+#define mmio_clear_32(addr,data)        (*(volatile unsigned int  *)(addr)) &= ~((unsigned int  )(data))
+#define mmio_clear_16(addr,data)        (*(volatile unsigned short*)(addr)) &= ~((unsigned short)(data))
+#define mmio_clear_8(addr,data)         (*(volatile unsigned char *)(addr)) &= ~((unsigned char )(data))
 //--------------------------------------------------------------------------
 
 

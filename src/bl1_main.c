@@ -18,39 +18,77 @@
 //		2018-01-15	Hans sim done
 ////////////////////////////////////////////////////////////////////////////////
 #include <nx_swallow.h>
-#include <nx_qemu_sim_printf.h>
 #include <nx_cpuif_regmap.h>
 #include <nx_bootheader.h>
 #include <iSDBOOT.h>
 #ifdef MEMTEST
 #include <memtester.h>
 #endif
+#ifdef SOC_SIM
+#include <nx_qemu_sim_printf.h>
+#else
+#include <nx_swallow_printf.h>
+#include <serial.h>
+#endif
+
+#include <nx_gpio.h>
+#include <nx_chip_iomux.h>
 
 unsigned int* bl1main()
 {
     int result = 0;
-
-#ifdef DEBUG
+    int nDDRC_init = 0;
+#ifdef SOC_SIM
     _dprintf("bl1 enter---\n");
 #endif
 
-    //todo
-    //uart init
-    //debug print
-    
-    //DDR1 memory initialize
-    _dprintf("DDR1 init start\n");
-    nx_cpuif_reg_write_one(	DDRC_REG_4   , 0x8C   ); // address : {bank, row, column} || OK
-    //nx_cpuif_reg_write_one(	DDRC_REG_8   , 0xC0C06   ); // reset default
-    nx_cpuif_reg_write_one(	DDRC_REG_8   , 0x0B270   ); // for 200MHz operation
-    nx_cpuif_reg_write_one(	DDRC_REG_0   , 0x1    );
+#if defined(MEMTEST) && defined(DEBUG) //early printf
+   serial_init(0); //channel = 0
+#endif
 
-    while(0 == nx_cpuif_reg_read_one(DDRC_REG_0, 0) );
-   _dprintf("DDR1 init done\n");
+    //DDR1 memory initialize   
+    nx_cpuif_reg_write_one(DDRC_REG_4, 0xC8A); // address : {bank, row, column} || OK
+    udelay(500);
+    //    nx_cpuif_reg_write_one(	DDRC_REG_8   , 0xC0C06   ); // reset default
+    nx_cpuif_reg_write_one(DDRC_REG_8, 0x181414); // for 200MHz operation //B270
+    udelay(500);
+    //nx_cpuif_reg_write_one(	DDRC_REG_8   , 0x000B270); // for 200MHz operation //B270
+    nx_cpuif_reg_write_one(DDRC_REG_C, 0x13443);
+    udelay(500);
     
-#ifdef MEMTEST   
-   simple_memtest();
+    nx_cpuif_reg_write_one(DDRC_REG_10, 0x618);
+    udelay(500);
+    //nx_cpuif_reg_write_one(DDRC_REG_0, 0x2); //clear
+    nx_cpuif_reg_write_one(DDRC_REG_0, 0x9E81); //start
+    udelay(500);
+
+    nDDRC_init = nx_cpuif_reg_read_one(DDRC_REG_0, 0);
+    while(0 == nDDRC_init);
+
+    if (nDDRC_init == 0x10) {
+        _dprintf("==> DDRC init complete !! \r\n");
+        _dprintf("==> read one = 0x%x \r\n",mmio_read_32((unsigned int*)PHY_BASEADDR_DDRC0_MODULE));
+    }
+    
+#ifdef MEMTEST
+#ifdef DEBUG
+   _dprintf("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\r\n");
+   _dprintf("DDRC_REG_50 = 0x%x\r\n", nx_cpuif_reg_read_one(DDRC_REG_50, 0));
+   _dprintf("DDRC_REG_54 = 0x%x\r\n", nx_cpuif_reg_read_one(DDRC_REG_54, 0));
+   _dprintf("DDRC_REG_58 = 0x%x\r\n", nx_cpuif_reg_read_one(DDRC_REG_58, 0));
+   _dprintf("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\r\n");   
+   _dprintf("simple_memtest run\r\n");
+#endif
+   udelay(2000);
+   simple_memtest2();
 #else
+
+#ifdef DEBUG
+   serial_init(0); //channel = 0
+
+   _dprintf("bootloader~start\r\n");
+   _dprintf("Bl1 Start \r\n");
+#endif
 
    //Boot mode check and BBL+linux loading
    result = iSDBOOT();

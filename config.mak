@@ -21,7 +21,7 @@ DEBUG			= y
 DEBUG_GDB               = n
 
 QEMU                    = n
-SIM                     = y
+SIM                     = n
 
 MEMTEST                 = n
 VECTOR_TEST             = n

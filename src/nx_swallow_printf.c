@@ -16,9 +16,11 @@
 
 
 #include <nx_swallow_printf.h>
-#include <nx_debug.h>
+//#include <nx_debug.h>
+#include <serial.h>
 
-#define nx_putchar(c) DebugPutch(c)
+//#define nx_putchar(c) DebugPutch(c)
+#define nx_putchar(c) serial_putc(c)
 
 void printchar(char **str, int c)
 {

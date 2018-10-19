@@ -35,13 +35,8 @@
 #include <nx_cmu.h>
 #include <nx_lib.h>
 
-#define HEADER_ID                               \
-                ((((unsigned int)'N')<< 0) |    \
-                 (((unsigned int)'S')<< 8) |    \
-                 (((unsigned int)'I')<<16) |    \
-                 (((unsigned int)'H')<<24))
 /*----------------------------------------------------------------------------*/
-#define SER_READ	0x03	/* Read Data from Memory Array */
+//#define SER_READ	0x03	/* Read Data from Memory Array */
 
 //------------------------------------------------------------------------------
 extern struct NX_GPIO_RegisterSet (* const pGPIOReg)[1];
@@ -125,7 +120,7 @@ void read_flash(unsigned char *pmem, unsigned int flashaddr, int rsize)
 	GPIOSetOutput((struct nxpadi *)&spipad[0][0], 0);	// output low
 
 	pSPI->SSIENR = 1;
-	pSPI->DR = SER_READ;
+	pSPI->DR = 0x3;//SER_READ;
 
 	while (addrstep--)
 		pSPI->DR = (flashaddr >> addrstep * 8) & 0xFF;
@@ -178,6 +173,12 @@ unsigned int iSPIBOOT(void)
 #endif
 	read_flash(plp, flashaddr, rsize);
 	flashaddr += rsize;
+
+        unsigned int HEADER_ID =
+                ((((unsigned int)'N')<< 0) |    \
+                 (((unsigned int)'S')<< 8) |    \
+                 (((unsigned int)'I')<<16) |    \
+                 (((unsigned int)'H')<<24))
 
 	if (pbi->signature != HEADER_ID) {
 #ifdef DEBUG
