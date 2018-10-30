@@ -1,11 +1,12 @@
 import os
+import sys
 from tempfile import mkstemp
 from shutil import move
 from os import fdopen, remove
 
 BL1_FILE_NAME = "bl1.bin"
 BBL_FILE_NAME = "bbl.bin"
-DTB_FILE_NAME = "swallow.dtb"
+DTB_FILE_NAME = ""
 NSIH_BL1_TXT_FILE_NAME = "nsih-bl1.txt"
 NSIH_BBL_TXT_FILE_NAME = "nsih-bbl.txt"
 
@@ -14,7 +15,7 @@ ZERO_PAD_FILE_NAME = "zeropad.bin"
 
 def binpadAppend(filename):
     tempBl1Size = os.stat(filename).st_size
-    temp = (tempBl1Size + 512 - 1)/512
+    temp = (tempBl1Size + 512 - 1) / 512
     padSize = (temp * 512) - tempBl1Size
 
     genFile = open(filename, 'ab')
@@ -49,18 +50,23 @@ def modNSIHTXT(txtFileName, binFileName, key1, key2):
     move(tempFile2, txtFileName)
 
 
-def main():
-    binpadAppend(BL1_FILE_NAME)
-    binpadAppend(BBL_FILE_NAME)
-    binpadAppend(DTB_FILE_NAME)
-    modNSIHTXT(NSIH_BL1_TXT_FILE_NAME, BL1_FILE_NAME, "0x040", "Load Size")
-    modNSIHTXT(NSIH_BBL_TXT_FILE_NAME, BBL_FILE_NAME, "0x040", "Load Size")
-    modNSIHTXT(NSIH_BL1_TXT_FILE_NAME, DTB_FILE_NAME,
+def main(boardName, binPath):
+    binpadAppend(binPath + BL1_FILE_NAME)
+    binpadAppend(binPath + BBL_FILE_NAME)
+    DTB_FILE_NAME = "swallow-" + boardName + ".dtb"
+    binpadAppend(binPath + "swallow-" + boardName + ".dtb")
+    modNSIHTXT(NSIH_BL1_TXT_FILE_NAME, binPath + BL1_FILE_NAME,
+               "0x040", "Load Size")
+    modNSIHTXT(NSIH_BBL_TXT_FILE_NAME, binPath + BBL_FILE_NAME,
+               "0x040", "Load Size")
+    modNSIHTXT(NSIH_BL1_TXT_FILE_NAME, binPath + DTB_FILE_NAME,
                "0x100", "DTB Binary Size")
 
 
 if __name__ == "__main__":
     try:
-        main()
+        print(sys.argv[1])
+        print(sys.argv[2])
+        main(sys.argv[1], sys.argv[2] + '/')
     finally:
         pass

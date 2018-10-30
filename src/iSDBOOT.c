@@ -993,9 +993,9 @@ int NX_SDMMC_ReadSectorData(
     NX_ASSERT(0 == (count % 32));
 
     while (0 < count) {
-#ifdef DEBUG
-        _dprintf("ReadSectorData : Try 0x%x\r\n",_cnt++);
-#endif
+/* #ifdef DEBUG */
+/*         _dprintf("ReadSectorData : Try 0x%x\r\n",_cnt++); */
+/* #endif */
         if ((pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_RXDR) || (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_DTO)) {            
             unsigned int FSize, Timeout = NX_SDMMC_TIMEOUT;
 
@@ -1007,13 +1007,13 @@ int NX_SDMMC_ReadSectorData(
                 break;
             }
             FSize = (pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOCOUNT) >> 17;
-#ifdef DEBUG            
-            _dprintf("ReadSectorData : FSize = 0x%x\r\n",FSize);
-#endif
+/* #ifdef DEBUG             */
+/*             _dprintf("ReadSectorData : FSize = 0x%x\r\n",FSize); */
+/* #endif */
             count -= (FSize * 4);
-#ifdef DEBUG
-            _dprintf("ReadSectorData : left count = 0x%x\r\n",count);
-#endif
+/* #ifdef DEBUG */
+/*             _dprintf("ReadSectorData : left count = 0x%x\r\n",count); */
+/* #endif */
             
             while (FSize) {
                 *pdwBuffer++ = pSDXCReg->DATA;
@@ -1341,6 +1341,7 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
         for (unsigned int i = 0; i < 128; i++) {
             _dprintf("%x ",*(temp+i));
         }
+        _dprintf("\r\n");
     }
 #endif
     //=============================================================================================================
@@ -1367,6 +1368,7 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
         for (unsigned int i = 0; i < 128; i++) {
             _dprintf("%x ",*(temp+i));
         }
+        _dprintf("\r\n");
     }
 #endif
     //=============================================================================================================
@@ -1392,6 +1394,7 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
         for (unsigned int i = 0; i < 128; i++) {
             _dprintf("%x ",*(temp+i));
         }
+        _dprintf("\r\n");
     }
 #endif
     //-------------------------------------------------------------------------------------------------------------
@@ -1440,13 +1443,14 @@ int SDMMCBOOT(SDBOOTSTATUS *pSDXCBootStatus)
         for (unsigned int i = 0; i < 128; i++) {
             _dprintf("%x ",*(temp+i));
         }
+        _dprintf("\r\n");
     }
 #endif
     //=============================================================================================================
     
 #endif //VECTOR_TEST
     return result;
-    
+
  error:
     return result;
 }

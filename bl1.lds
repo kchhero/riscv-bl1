@@ -10,6 +10,8 @@ SECTIONS
                 obj/head.o   (.text)
                 obj/bl1_main.o (.text)
                 obj/nx_*.o (.text)
+                obj/iS*.o (.text)
+                obj/serial.o (.text)
                 *(.init.text)
                 *(.init.data)
                 *(.init.code)

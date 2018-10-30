@@ -1,9 +1,10 @@
 import binascii
+import sys
 
 
-def converthex():
-    srcFilePath = "sdboot.bin"
-    hexFileName = "sdboot.hex"
+def converthex(binPath):
+    srcFilePath = binPath+"sdboot.bin"
+    hexFileName = binPath+"sdboot.hex"
 
     genFile = open(hexFileName, 'wb')
     # temp = []
@@ -20,12 +21,12 @@ def converthex():
     genFile.close()
 
 
-def main():
-    converthex()
+def main(binPath):
+    converthex(binPath)
 
 
 if __name__ == "__main__":
     try:
-        main()
+        main(sys.argv[1]+'/')
     finally:
         pass

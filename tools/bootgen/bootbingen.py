@@ -47,28 +47,28 @@ def nsihgen(txtFileName, binFileName):
     genFile.close()
 
 
-def sdboot_gpt_headercut():
-    genFile = open("sdboot.bin", 'wb')
+def sdboot_gpt_headercut(filename):
+    genFile = open(filename, 'wb')
     with open(ORG_GPT_FILE_NAME, 'rb') as data:
         genFile.write(data.read(0x43f))  # 1088)) #0~0x43f
 
     genFile.close()
-    padAppend(0x43ff - 0x43f + 1)  # 512byte * 34sector = 17408
+    padAppend(0x43ff - 0x43f + 1, filename)  # 512byte * 34sector = 17408
 
     # with open('sdboot.bin', 'rb+') as filehandle:
     #     filehandle.seek(-1, os.SEEK_END)
     #     filehandle.truncate()
 
 
-def sdboot_dos_headercut():
-    genFile = open("sdboot.bin", 'wb')
+def sdboot_dos_headercut(filename):
+    genFile = open(filename, 'wb')
     with open(ORG_DOS_FILE_NAME, 'rb') as data:
         genFile.write(data.read(512))  # 0~0x1ff
     genFile.close()
 
 
-def padAppend(padSize):
-    genFile = open("sdboot.bin", 'ab')
+def padAppend(padSize, filename):
+    genFile = open(filename, 'ab')
 
     with open(ZERO_PAD_FILE_NAME, 'rb') as data:
         genFile.write(data.read(padSize))  # 0~0x1f0 + 16byte
@@ -89,24 +89,24 @@ def vector_bin_size_fitting(filename):
     genFile.close()
 
 
-def main(binType):
+def main(binType, binPath):
     if binType == "gpt":
-        sdboot_gpt_headercut()
+        sdboot_gpt_headercut(binPath+GEN_FILE_NAME)
     elif binType == "dos":
-        sdboot_dos_headercut()
+        sdboot_dos_headercut(binPath+GEN_FILE_NAME)
     else:
         print('Usage: python bootbingen.py \"gpt\"')
         print('Usage: python bootbingen.py \"dos\"')
 
-    nsihgen(NSIH_BL1_TXT_FILE_NAME, NSIH_BL1_BIN_FILE_NAME)
-    nsihgen(NSIH_BBL_TXT_FILE_NAME, NSIH_BBL_BIN_FILE_NAME)
+    nsihgen(NSIH_BL1_TXT_FILE_NAME, binPath+NSIH_BL1_BIN_FILE_NAME)
+    nsihgen(NSIH_BBL_TXT_FILE_NAME, binPath+NSIH_BBL_BIN_FILE_NAME)
 
-    vector_bin_size_fitting(VECTOR_BIN_FILE_NAME)
+    vector_bin_size_fitting(binPath+VECTOR_BIN_FILE_NAME)
 
 
 if __name__ == "__main__":
     try:
         # profile.run('main()')
-        main(sys.argv[1])
+        main(sys.argv[1], sys.argv[2]+'/')
     finally:
         pass

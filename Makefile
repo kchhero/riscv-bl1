@@ -58,7 +58,7 @@ else
 endif
 
 ifeq ($(MEMTEST),y)
-CFLAGS			+=	-DMEMTEST -DSIMPLE_MEMTEST
+CFLAGS			+=	-DMEMTEST
 SYS_OBJS		+=	memtester.o
 endif
 

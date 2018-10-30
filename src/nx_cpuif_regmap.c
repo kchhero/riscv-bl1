@@ -39,7 +39,7 @@ void nx_cpuif_reg_write_one(__nx_cpuif_symbol__ symbol, unsigned int  regval)
     masked_writeval = (reg_bitwidth < 32) ? regval & ((1<<(reg_bitwidth))-1) : regval ;
     reg_writeval = masked_writeval << reg_startbit;
 
-#if defined(DEBUG) && !defined(SOC_SIM)
+#if 0//defined(DEBUG) && !defined(SOC_SIM)
     _dprintf("<<write_reg>>[DEBUG]----------------------------------------------\r\n");
     _dprintf("<<write_reg>>[DEBUG] symbol.baseaddr = 0x%x\r\n", symbol.baseaddr );
     _dprintf("<<write_reg>>[DEBUG] symbol.baseaddr3 = 0x%x\r\n", symbol.baseaddr+symbol.offset );
@@ -54,7 +54,7 @@ void nx_cpuif_reg_write_one(__nx_cpuif_symbol__ symbol, unsigned int  regval)
 
     //*reg = (unsigned int)reg_val;
     WriteIODW(reg, reg_val);
-#if defined(DEBUG) && !defined(SOC_SIM)
+#if 0//defined(DEBUG) && !defined(SOC_SIM)
     _dprintf("<<write_reg>>[DEBUG]----------------------------------------------\r\n");    
     _dprintf("<<write_final>>[DEBUG] reg = 0x%x, regval = 0x%x\r\n", reg, reg_val);
     _dprintf("<<write_after>>[DEBUG] reg = 0x%x, regval = 0x%x\r\n", reg, ReadIODW(reg));
@@ -92,7 +92,7 @@ unsigned int nx_cpuif_reg_read_one(__nx_cpuif_symbol__ symbol, unsigned int * re
 
     //NX_ASSERT( reg_bitwidth != 0 );
 
-#if defined(DEBUG) && !defined(SOC_SIM)
+#if 0//defined(DEBUG) && !defined(SOC_SIM)
     _dprintf("<<read_reg>>[DEBUG]----------------------------------------------\r\n");
     _dprintf("<<read_reg>>[DEBUG] reg_addr     = 0x%x\r\n", reg_addr     );
     _dprintf("<<read_reg>>[DEBUG] reg_startbit = 0x%x\r\n", reg_startbit );

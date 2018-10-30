@@ -23,7 +23,7 @@ DEBUG_GDB               = n
 QEMU                    = n
 SIM                     = n
 
-MEMTEST                 = n
+MEMTEST                 = y
 VECTOR_TEST             = n
 
 CROSS_TOOL_TOP		=
