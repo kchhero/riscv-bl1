@@ -44,7 +44,8 @@ DEFAULT_ROOTFS_PATH=`readlink -ev ${ROOT_PATH}/tools/rootfs/`
 
 RAMDISK_FILE=ramdisk.cpio.gz
 
-BOARD_NAME=
+# default board name is 'drone'
+BOARD_NAME="drone"
 
 set -e
 
@@ -124,6 +125,8 @@ function do_build()
     echo -e "\033[45;30m              ---------  Build Start ---------                      \033[0m"
     echo -e "\033[45;30m ------------------------------------------------------------------ \033[0m"
 
+    export GIT_SSL_NO_VERIFY=1
+
     if [ ! -d ${ROOT_PATH}/build ];then
         mkdir -p ${ROOT_PATH}/build
     fi
@@ -147,11 +150,11 @@ function do_build()
             echo -e "No build, convert only"
         elif [ $BUILD_ALL == true ];then
             echo -e "\033[45;30m All Build !\033[0m"
-#    qemu_build
+#	    qemu_build
             bl1_build
-            # kernel_build
-            # pk_build
-	    # dtb_build
+#            kernel_build
+#            pk_build
+#	    dtb_build
         else
             echo -e "\033[45;30m Partital Build !\033[0m"
             if [ $BUILD_BL1 == true ];then
@@ -265,7 +268,7 @@ function kernel_build()
     make CONFIG_INITRAMFS_SOURCE="${BUILDROOT_CONF_PATH}/initramfs.txt ${ROOTFS_PATH}" \
          CONFIG_INITRAMFS_ROOT_UID=1000 \
          CONFIG_INITRAMFS_ROOT_GID=1000 \
-         ARCH=${KERNEL_ARCH} CROSS_COMPILE=${RISCV}/bin/riscv64-unknown-elf- vmlinux -j8
+         ARCH=${KERNEL_ARCH} CROSS_COMPILE=${RISCV}bin/riscv64-unknown-elf- vmlinux -j8
 
     popd
 }
